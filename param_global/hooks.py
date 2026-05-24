@@ -82,8 +82,8 @@ app_license = "mit"
 # Installation
 # ------------
 
-# before_install = "param_global.install.before_install"
-# after_install = "param_global.install.after_install"
+after_install = "param_global.install.after_install"
+after_migrate = "param_global.install.after_migrate"
 
 # Uninstallation
 # ------------
