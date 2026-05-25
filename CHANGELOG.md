@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.1.0] - 2026-05-25
+
+### Naming Series Articles
+
+- **Naming series activée** : `Stock Settings.item_naming_by = "Naming Series"` (via `set_single_value` + `set_default`)
+- **Format numérique pur** : série `######` → premier article `000001`
+- **Property Setters** : `item_code` masqué, `naming_series` affiché (via `set_by_naming_series`)
+
+### Interface utilisateur
+
+- **Plein écran par défaut** : `localStorage.container_fullwidth = "true"` à chaque chargement du bureau
+- **Barre latérale cachée par défaut** : `localStorage.show_sidebar = "false"` + listener `page-change` pour réappliquer l'état sur chaque navigation SPA
+
+---
+
 ## [1.0.0] - 2026-05-24
 
 ### Initialisation de l'app

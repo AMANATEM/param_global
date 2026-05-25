@@ -26,4 +26,20 @@ def apply_global_params():
         except Exception:
             pass
 
+    # Naming series articles : numérique pur (000001, 000002, ...)
+    frappe.db.set_single_value("Stock Settings", "item_naming_by", "Naming Series")
+    frappe.db.set_default("item_naming_by", "Naming Series")
+    frappe.db.set_value(
+        "DocField",
+        {"parent": "Item", "fieldname": "naming_series"},
+        {
+            "options": "######",
+            "default": "######",
+        },
+        update_modified=False,
+    )
+    from erpnext.utilities.naming import set_by_naming_series
+    set_by_naming_series("Item", "item_code", True, hide_name_field=True, make_mandatory=0)
+    frappe.clear_cache(doctype="Item")
+
     frappe.db.commit()
