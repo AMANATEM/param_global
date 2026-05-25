@@ -42,4 +42,22 @@ def apply_global_params():
     set_by_naming_series("Item", "item_code", True, hide_name_field=True, make_mandatory=0)
     frappe.clear_cache(doctype="Item")
 
+    # TVA : supprimer le template 10%, garder uniquement 20%
+    for doctype in ("Sales Taxes and Charges Template", "Purchase Taxes and Charges Template"):
+        try:
+            if frappe.db.exists(doctype, "Morroco VAT 10% - AMA"):
+                frappe.delete_doc(doctype, "Morroco VAT 10% - AMA", force=True, ignore_permissions=True)
+        except Exception:
+            pass
+
+    # TVA 20% : prix TTC (included_in_print_rate) sur les templates Sales et Purchase
+    for child_table in ("Sales Taxes and Charges", "Purchase Taxes and Charges"):
+        frappe.db.set_value(
+            child_table,
+            {"parent": "Morroco VAT 20% - AMA", "rate": 20},
+            "included_in_print_rate",
+            1,
+            update_modified=False,
+        )
+
     frappe.db.commit()
