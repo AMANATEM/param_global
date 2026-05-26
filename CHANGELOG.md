@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.2.1] - 2026-05-26
+
+### Affichage du nom article dans les champs lien
+
+- **`install.py`** : active `show_title_field_in_link = 1` sur le DocType `Item` — Frappe affiche désormais `item_name` (nom article) à la place du code dans tous les champs lien vers Item (grilles BL, commandes, factures, etc.), aussi bien dans l'input après sélection que dans la vue compacte des lignes. Idempotent : réappliqué à chaque `bench migrate`.
+
+---
+
 ## [1.2.0] - 2026-05-25
 
 ### TVA

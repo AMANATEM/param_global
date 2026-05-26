@@ -26,6 +26,10 @@ def apply_global_params():
         except Exception:
             pass
 
+    # Afficher le nom de l'article (item_name) dans tous les champs lien vers Item
+    frappe.db.set_value("DocType", "Item", "show_title_field_in_link", 1, update_modified=False)
+    frappe.clear_cache(doctype="Item")
+
     # Naming series articles : numérique pur (000001, 000002, ...)
     frappe.db.set_single_value("Stock Settings", "item_naming_by", "Naming Series")
     frappe.db.set_default("item_naming_by", "Naming Series")
