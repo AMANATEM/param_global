@@ -1,14 +1,49 @@
-// Forcer les valeurs par défaut à chaque chargement du bureau
 localStorage.setItem("container_fullwidth", "true");
+localStorage.setItem("pg_show_sidebar", "false");
 localStorage.setItem("show_sidebar", "false");
 
-// Réappliquer l'état de la sidebar à chaque navigation SPA
-$(document).on("page-change", function () {
-	var show_sidebar = JSON.parse(localStorage.getItem("show_sidebar") || "true");
-	$(document.body).toggleClass("no-list-sidebar", !show_sidebar);
-	if (!show_sidebar) {
-		$(".page-container .layout-side-section").css("display", "");
+// Le CSS natif de Frappe pour no-list-sidebar ne couvre que les pages List/
+// (sélecteur : [data-page-route^="List/"]).  Pour les formulaires, Frappe applique
+// un style inline via sidebar_wrapper.toggle() — il faut !important pour le neutraliser.
+$(function () {
+	if (!document.getElementById("param-no-sidebar")) {
+		$("<style id='param-no-sidebar'>")
+			.text(
+				"body.pg-no-sidebar .layout-side-section { display: none !important; }\n" +
+				"body.pg-no-sidebar .layout-main-section-wrapper { flex: 1 1 auto !important; }"
+			)
+			.appendTo("head");
 	}
+	_pg_apply();
+});
+
+function _pg_show_pref() {
+	return localStorage.getItem("pg_show_sidebar") === "true";
+}
+
+function _pg_apply() {
+	var show = _pg_show_pref();
+	$(document.body).toggleClass("pg-no-sidebar", !show);
+	$(document.body).toggleClass("no-list-sidebar", !show);
+	localStorage.setItem("show_sidebar", show ? "true" : "false");
+}
+
+// Bouton toggle formulaire (page.js) : sidebar_wrapper.toggle() + trigger("toggleSidebar")
+$(document).on("toggleSidebar", function () {
+	var next = !_pg_show_pref();
+	localStorage.setItem("pg_show_sidebar", next ? "true" : "false");
+	_pg_apply();
+});
+
+// Bouton toggle liste (base_list.js) : met à jour localStorage.show_sidebar + trigger("toggleListSidebar")
+$(document).on("toggleListSidebar", function () {
+	var show = JSON.parse(localStorage.show_sidebar || "true");
+	localStorage.setItem("pg_show_sidebar", show ? "true" : "false");
+	_pg_apply();
+});
+
+$(document).on("page-change", function () {
+	_pg_apply();
 });
 
 // Supprimer le flash « Espace de Travail » au chargement de la page Workspaces.
