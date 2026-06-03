@@ -44,7 +44,7 @@ app_include_js = "/assets/param_global/js/ui_defaults.js"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {"Item": "public/js/item_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -84,6 +84,37 @@ app_include_js = "/assets/param_global/js/ui_defaults.js"
 
 after_install = "param_global.install.after_install"
 after_migrate = "param_global.install.after_migrate"
+
+doc_events = {
+	"Purchase Receipt": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Delivery Note": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Stock Entry": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Purchase Invoice": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Sales Invoice": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Stock Reconciliation": {
+		"on_submit": "param_global.stock_sync.on_stock_document",
+		"on_cancel": "param_global.stock_sync.on_stock_document",
+	},
+	"Item Price": {
+		"on_save": "param_global.stock_sync.on_item_price_change",
+		"on_trash": "param_global.stock_sync.on_item_price_change",
+	},
+}
 
 # Uninstallation
 # ------------

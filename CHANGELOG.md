@@ -4,6 +4,19 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.3.0] - 2026-06-03
+
+### Ajouté
+- Liste Article : recherche multi-tokens sur "Nom de l'article" (tokens dans n'importe quel ordre)
+- Liste Article : tri par défaut ID décroissant, réinitialisé au reload et au bouton Refresh
+- Champs custom read-only sur Item pour les colonnes de liste :
+  - `stock_depot`, `stock_garage`, `stock_principal` — stock par magasin
+  - `prix_vente_standard`, `prix_vente2`, `prix_vente3` — prix de vente par liste
+  - `dernier_prix_achat_ttc` — dernier prix d'achat TTC (depuis le dernier BR validé)
+- Mise à jour en temps réel via `doc_events` sur Purchase Receipt, Delivery Note, Stock Entry, Purchase Invoice, Sales Invoice, Stock Reconciliation et Item Price
+
+---
+
 ## [1.2.3] - 2026-06-03
 
 ### Corrigé

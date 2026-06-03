@@ -64,4 +64,189 @@ def apply_global_params():
             update_modified=False,
         )
 
+    create_stock_fields()
+    sync_stock_items()
+    create_price_list_fields()
+    sync_price_list_items()
+    create_last_purchase_ttc_field()
+    sync_last_purchase_ttc_all()
+
+    frappe.db.commit()
+
+
+# Magasins actifs → fieldname snake_case
+STOCK_WAREHOUSES = {
+    "DEPOT - AMA": "stock_depot",
+    "GARAGE - AMA": "stock_garage",
+    "PRINCIPAL - AMA": "stock_principal",
+}
+
+# Listes de prix de vente → fieldname
+SELLING_PRICE_LISTS = {
+    "Vente standard": "prix_vente_standard",
+    "Vente2": "prix_vente2",
+    "Vente3": "prix_vente3",
+}
+
+
+def create_stock_fields():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+    for warehouse, fieldname in STOCK_WAREHOUSES.items():
+        label = "Stock " + warehouse.split(" - ")[0].capitalize()
+        create_custom_field(
+            "Item",
+            {
+                "fieldname": fieldname,
+                "label": label,
+                "fieldtype": "Float",
+                "read_only": 1,
+                "in_list_view": 0,
+                "insert_after": "last_purchase_rate",
+            },
+        )
+
+
+def create_last_purchase_ttc_field():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+    create_custom_field(
+        "Item",
+        {
+            "fieldname": "dernier_prix_achat_ttc",
+            "label": "Dernier Prix Achat TTC",
+            "fieldtype": "Float",
+            "read_only": 1,
+            "in_list_view": 0,
+            "insert_after": "last_purchase_rate",
+        },
+    )
+
+
+def sync_last_purchase_ttc_all():
+    """Synchronisation complète — appelée à chaque bench migrate."""
+    frappe.db.sql("""
+        UPDATE `tabItem` i
+        SET i.`dernier_prix_achat_ttc` = COALESCE((
+            SELECT pri.rate
+            FROM `tabPurchase Receipt Item` pri
+            JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
+            WHERE pri.item_code = i.name
+              AND pr.docstatus = 1
+            ORDER BY pr.posting_date DESC, pr.posting_time DESC, pr.creation DESC
+            LIMIT 1
+        ), 0)
+    """)
+
+
+def sync_last_purchase_ttc_for_items(item_codes):
+    """Mise à jour temps réel après submit/cancel d'un BR."""
+    if not item_codes:
+        return
+    placeholders = ", ".join(["%s"] * len(item_codes))
+    frappe.db.sql(
+        f"""
+        UPDATE `tabItem` i
+        SET i.`dernier_prix_achat_ttc` = (
+            SELECT pri.rate
+            FROM `tabPurchase Receipt Item` pri
+            JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
+            WHERE pri.item_code = i.name
+              AND pr.docstatus = 1
+            ORDER BY pr.posting_date DESC, pr.posting_time DESC, pr.creation DESC
+            LIMIT 1
+        )
+        WHERE i.name IN ({placeholders})
+        """,
+        list(item_codes),
+    )
+    frappe.db.commit()
+
+
+def sync_stock_items():
+    """Synchronisation complète — appelée à chaque bench migrate."""
+    for warehouse, fieldname in STOCK_WAREHOUSES.items():
+        frappe.db.sql(
+            f"""
+            UPDATE `tabItem` i
+            LEFT JOIN `tabBin` b ON b.item_code = i.name AND b.warehouse = %s
+            SET i.`{fieldname}` = COALESCE(b.actual_qty, 0)
+            """,
+            (warehouse,),
+        )
+
+
+def create_price_list_fields():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+    for price_list, fieldname in SELLING_PRICE_LISTS.items():
+        create_custom_field(
+            "Item",
+            {
+                "fieldname": fieldname,
+                "label": "Prix " + price_list,
+                "fieldtype": "Float",
+                "read_only": 1,
+                "in_list_view": 0,
+                "insert_after": "last_purchase_rate",
+            },
+        )
+
+
+def sync_price_list_items():
+    """Synchronisation complète des prix de vente — appelée à chaque bench migrate."""
+    for price_list, fieldname in SELLING_PRICE_LISTS.items():
+        frappe.db.sql(
+            f"""
+            UPDATE `tabItem` i
+            LEFT JOIN `tabItem Price` ip
+                ON ip.item_code = i.name
+                AND ip.price_list = %s
+                AND ip.selling = 1
+                AND (ip.valid_upto IS NULL OR ip.valid_upto >= CURDATE())
+                AND (ip.valid_from IS NULL OR ip.valid_from <= CURDATE())
+            SET i.`{fieldname}` = COALESCE(ip.price_list_rate, 0)
+            """,
+            (price_list,),
+        )
+
+
+def sync_price_list_for_items(item_codes):
+    """Mise à jour temps réel des prix de vente pour une liste d'articles."""
+    if not item_codes:
+        return
+    placeholders = ", ".join(["%s"] * len(item_codes))
+    for price_list, fieldname in SELLING_PRICE_LISTS.items():
+        frappe.db.sql(
+            f"""
+            UPDATE `tabItem` i
+            LEFT JOIN `tabItem Price` ip
+                ON ip.item_code = i.name
+                AND ip.price_list = %s
+                AND ip.selling = 1
+                AND (ip.valid_upto IS NULL OR ip.valid_upto >= CURDATE())
+                AND (ip.valid_from IS NULL OR ip.valid_from <= CURDATE())
+            SET i.`{fieldname}` = COALESCE(ip.price_list_rate, 0)
+            WHERE i.name IN ({placeholders})
+            """,
+            [price_list] + list(item_codes),
+        )
+    frappe.db.commit()
+
+
+def sync_stock_for_items(item_codes):
+    """Mise à jour temps réel pour une liste d'articles donnée."""
+    if not item_codes:
+        return
+    placeholders = ", ".join(["%s"] * len(item_codes))
+    for warehouse, fieldname in STOCK_WAREHOUSES.items():
+        frappe.db.sql(
+            f"""
+            UPDATE `tabItem` i
+            LEFT JOIN `tabBin` b ON b.item_code = i.name AND b.warehouse = %s
+            SET i.`{fieldname}` = COALESCE(b.actual_qty, 0)
+            WHERE i.name IN ({placeholders})
+            """,
+            [warehouse] + list(item_codes),
+        )
     frappe.db.commit()
