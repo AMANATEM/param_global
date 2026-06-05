@@ -70,6 +70,7 @@ def apply_global_params():
     sync_price_list_items()
     create_last_purchase_ttc_field()
     sync_last_purchase_ttc_all()
+    create_tiers_fields()
 
     frappe.db.commit()
 
@@ -232,6 +233,50 @@ def sync_price_list_for_items(item_codes):
             [price_list] + list(item_codes),
         )
     frappe.db.commit()
+
+
+def create_tiers_fields():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_field
+
+    create_custom_field(
+        "Customer",
+        {
+            "fieldname": "code_tiers",
+            "label": "Code Client",
+            "fieldtype": "Data",
+            "read_only": 1,
+            "in_list_view": 1,
+            "insert_after": "customer_name",
+            "no_copy": 1,
+        },
+    )
+
+    create_custom_field(
+        "Supplier",
+        {
+            "fieldname": "code_tiers",
+            "label": "Code Fournisseur",
+            "fieldtype": "Data",
+            "read_only": 1,
+            "in_list_view": 1,
+            "insert_after": "supplier_name",
+            "no_copy": 1,
+        },
+    )
+
+    create_custom_field(
+        "Purchase Receipt",
+        {
+            "fieldname": "code_fournisseur",
+            "label": "Code Fournisseur",
+            "fieldtype": "Data",
+            "read_only": 1,
+            "fetch_from": "supplier.code_tiers",
+            "in_list_view": 1,
+            "insert_after": "supplier",
+            "no_copy": 1,
+        },
+    )
 
 
 def sync_stock_for_items(item_codes):

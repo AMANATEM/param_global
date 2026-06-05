@@ -86,6 +86,12 @@ after_install = "param_global.install.after_install"
 after_migrate = "param_global.install.after_migrate"
 
 doc_events = {
+	"Customer": {
+		"before_insert": "param_global.tiers.before_insert_customer",
+	},
+	"Supplier": {
+		"before_insert": "param_global.tiers.before_insert_supplier",
+	},
 	"Purchase Receipt": {
 		"on_submit": "param_global.stock_sync.on_stock_document",
 		"on_cancel": "param_global.stock_sync.on_stock_document",

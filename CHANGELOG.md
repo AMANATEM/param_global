@@ -4,6 +4,18 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.4.0] - 2026-06-05
+
+### Codes tiers : Client et Fournisseur
+
+- Champ custom `code_tiers` (Data, read-only, `in_list_view`) ajouté sur **Customer** et **Supplier**
+- Auto-incrément à la création : `C.######` pour les clients (C000001…), `F.######` pour les fournisseurs (F000001…) via hook `before_insert`
+- Champ custom `code_fournisseur` (fetch depuis `supplier.code_tiers`, `in_list_view`) ajouté sur **Purchase Receipt**
+- Patch `init_code_tiers` : rétro-remplissage de tous les clients et fournisseurs existants
+- Patch `init_code_fournisseur_br` : rétro-remplissage de tous les bons de réception existants
+
+---
+
 ## [1.3.0] - 2026-06-03
 
 ### Ajouté
