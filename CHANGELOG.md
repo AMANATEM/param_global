@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.5.0] - 2026-06-09
+
+### Format des nombres — standard français
+
+- `System Settings.number_format` forcé à `#.###,##` dans `apply_global_params()`
+  → tous les nombres s'affichent au format français (`1.292,60`, `120,00`)
+  partout : écran, impression, PDF, tous les rapports et apps.
+
 ## [1.4.0] - 2026-06-05
 
 ### Codes tiers : Client et Fournisseur

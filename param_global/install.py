@@ -10,6 +10,11 @@ def after_migrate():
 
 
 def apply_global_params():
+    # Format des nombres : standard français (séparateur milliers « . », décimal
+    # « , ») → 1.292,60. S'applique partout : écran, impression, PDF, tous les
+    # rapports et apps.
+    frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
+
     # Stock Settings
     frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1)
     frappe.db.set_single_value("Stock Settings", "stock_uom", "Unité")
