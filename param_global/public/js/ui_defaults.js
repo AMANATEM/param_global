@@ -21,11 +21,24 @@ function _pg_show_pref() {
 	return localStorage.getItem("pg_show_sidebar") === "true";
 }
 
+// Exception : la vue impression (route « print/... ») doit toujours afficher la
+// barre latérale, car c'est elle qui contient le sélecteur de format d'impression.
+function _pg_is_print_view() {
+	try {
+		var r = frappe.get_route && frappe.get_route();
+		return !!r && r[0] === "print";
+	} catch (e) {
+		return false;
+	}
+}
+
 function _pg_apply() {
-	var show = _pg_show_pref();
+	var pref = _pg_show_pref();
+	// L'exception impression force l'affichage visuel sans modifier la préférence stockée.
+	var show = pref || _pg_is_print_view();
 	$(document.body).toggleClass("pg-no-sidebar", !show);
 	$(document.body).toggleClass("no-list-sidebar", !show);
-	localStorage.setItem("show_sidebar", show ? "true" : "false");
+	localStorage.setItem("show_sidebar", pref ? "true" : "false");
 }
 
 // Bouton toggle formulaire (page.js) : sidebar_wrapper.toggle() + trigger("toggleSidebar")

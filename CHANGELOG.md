@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.6.0] - 2026-06-11
+
+### Exception barre latérale sur la vue impression
+
+- `ui_defaults.js` : la barre latérale reste masquée par défaut, **sauf sur la vue impression** (route `print/...`). Ajout de `_pg_is_print_view()` ; `_pg_apply()` force l'affichage visuel de `.layout-side-section` sur cette route — sans modifier la préférence stockée `pg_show_sidebar`. Permet de choisir le format d'impression (le sélecteur se trouve dans cette barre).
+
+---
+
 ## [1.5.0] - 2026-06-09
 
 ### Format des nombres — standard français
