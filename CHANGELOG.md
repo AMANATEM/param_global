@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.6.1] - 2026-06-12
+
+### Désactivation du filtre-colonne au clic dans les listes
+
+- `ui_defaults.js` : suppression du comportement natif Frappe « clic sur une cellule → filtre automatique » via deux mécanismes : (1) CSS `pointer-events: none` sur `.filterable` (neutralise hover underline, curseur pointeur et clic) ; (2) monkey-patch de `ListView.prototype.setup_filterable` en no-op. Le lien Titre conserve son comportement (ouvre le formulaire) mais perd son soulignement au survol (`.list-subject a:hover { text-decoration: none }`).
+
+---
+
 ## [1.6.0] - 2026-06-11
 
 ### Exception barre latérale sur la vue impression

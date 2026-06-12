@@ -15,6 +15,18 @@ $(function () {
 			.appendTo("head");
 	}
 	_pg_apply();
+
+	if (!document.getElementById("param-no-filterable")) {
+		$("<style id='param-no-filterable'>")
+			.text(
+				".filterable { pointer-events: none !important; }\n" +
+				".list-subject a:hover { text-decoration: none !important; }"
+			)
+			.appendTo("head");
+	}
+	if (frappe.views && frappe.views.ListView) {
+		frappe.views.ListView.prototype.setup_filterable = function () {};
+	}
 });
 
 function _pg_show_pref() {
