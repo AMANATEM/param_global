@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.6.2] - 2026-06-22
+
+### Recherche liste Article déléguée à l'app article
+
+- `item_list.js` : suppression de la recherche multi-mots sur le Nom et du filtrage par colonne (désormais gérés par `article/item_list.js`). Ne conserve plus que le tri global par défaut (ID décroissant).
+
+---
+
 ## [1.6.1] - 2026-06-12
 
 ### Désactivation du filtre-colonne au clic dans les listes

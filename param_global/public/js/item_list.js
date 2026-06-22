@@ -7,27 +7,18 @@ frappe.listview_settings["Item"] = frappe.listview_settings["Item"] || {};
 	settings.onload = function (listview) {
 		if (typeof prev_onload === "function") prev_onload(listview);
 
-		let _names_cache = null;
-
-		// ── get_args : filtre multi-tokens + tri par défaut ID décroissant ────
+		// ── Tri par défaut : ID décroissant ────────────────────────────────────
+		// La recherche par colonne (y compris le multi-mots sur le Nom) est gérée
+		// par article/item_list.js — ici on ne s'occupe QUE du tri global.
 		const orig_get_args = listview.get_args.bind(listview);
 		listview.get_args = function () {
 			const args = orig_get_args();
-
-			if (_names_cache !== null) {
-				args.filters = args.filters.filter((f) => f[1] !== "item_name");
-				const names = _names_cache.length ? _names_cache : ["__aucun__"];
-				args.filters.push(["Item", "name", "in", names]);
-			}
-
 			if (!listview.sort_by || listview.sort_by === "modified") {
 				args.order_by = "`tabItem`.`name` desc";
 			}
-
 			return args;
 		};
 
-		// ── Tri par défaut ─────────────────────────────────────────────────────
 		function reset_sort() {
 			listview.sort_by = "modified";
 			listview.sort_order = "desc";
@@ -74,41 +65,5 @@ frappe.listview_settings["Item"] = frappe.listview_settings["Item"] || {};
 				manual_refresh();
 			}
 		});
-
-		// ── Recherche multi-tokens sur Nom de l'article ────────────────────────
-		function bind_filter() {
-			const f = listview.page.fields_dict["item_name"];
-			if (!f || !f.$input) return;
-
-			f.$input.off("input.pg_item").on(
-				"input.pg_item",
-				frappe.utils.debounce(function () {
-					const val = (f.get_value() || "").trim();
-					const tokens = val.split(/\s+/).filter(Boolean);
-
-					if (tokens.length <= 1) {
-						if (_names_cache !== null) {
-							_names_cache = null;
-							listview.start = 0;
-							listview.refresh();
-						}
-						return;
-					}
-
-					frappe.call({
-						method: "param_global.api.recherche_article_liste",
-						args: { txt: val },
-						no_spinner: true,
-						callback: function (r) {
-							_names_cache = r.message || [];
-							listview.start = 0;
-							listview.refresh();
-						},
-					});
-				}, 300)
-			);
-		}
-
-		bind_filter();
 	};
 })();
