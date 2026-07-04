@@ -4,6 +4,15 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.6.3] - 2026-07-04
+
+### Repli sur `dpa_historique` pour `dernier_prix_achat_ttc`
+
+- `sync_last_purchase_ttc_all()` / `sync_last_purchase_ttc_for_items()` : le calcul de `Item.dernier_prix_achat_ttc` bascule désormais sur `dpa_historique` (app `article`) via `COALESCE` tant qu'aucun Bon de Réception validé n'existe pour l'article, au lieu de retomber sur `0`. Dès qu'un BR est validé, sa valeur reprend le dessus automatiquement.
+- Vérification de la présence de la colonne (`frappe.db.has_column`) pour ne pas casser un site où `article` ne serait pas installée.
+
+---
+
 ## [1.6.2] - 2026-06-22
 
 ### Recherche liste Article déléguée à l'app article

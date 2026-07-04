@@ -129,9 +129,18 @@ def create_last_purchase_ttc_field():
     )
 
 
+def _last_purchase_ttc_fallback():
+    """dpa_historique (app article) sert de point de départ tant qu'aucun Bon
+    de Réception réel n'a été validé pour l'article ; dès qu'un BR existe, sa
+    valeur prend le dessus automatiquement (COALESCE). Le champ appartenant à
+    une autre app, on vérifie sa présence pour ne pas casser un site où
+    `article` ne serait pas (encore) installée."""
+    return "i.`dpa_historique`" if frappe.db.has_column("Item", "dpa_historique") else "0"
+
+
 def sync_last_purchase_ttc_all():
     """Synchronisation complète — appelée à chaque bench migrate."""
-    frappe.db.sql("""
+    frappe.db.sql(f"""
         UPDATE `tabItem` i
         SET i.`dernier_prix_achat_ttc` = COALESCE((
             SELECT pri.rate
@@ -141,7 +150,7 @@ def sync_last_purchase_ttc_all():
               AND pr.docstatus = 1
             ORDER BY pr.posting_date DESC, pr.posting_time DESC, pr.creation DESC
             LIMIT 1
-        ), 0)
+        ), {_last_purchase_ttc_fallback()}, 0)
     """)
 
 
@@ -153,7 +162,7 @@ def sync_last_purchase_ttc_for_items(item_codes):
     frappe.db.sql(
         f"""
         UPDATE `tabItem` i
-        SET i.`dernier_prix_achat_ttc` = (
+        SET i.`dernier_prix_achat_ttc` = COALESCE((
             SELECT pri.rate
             FROM `tabPurchase Receipt Item` pri
             JOIN `tabPurchase Receipt` pr ON pr.name = pri.parent
@@ -161,7 +170,7 @@ def sync_last_purchase_ttc_for_items(item_codes):
               AND pr.docstatus = 1
             ORDER BY pr.posting_date DESC, pr.posting_time DESC, pr.creation DESC
             LIMIT 1
-        )
+        ), {_last_purchase_ttc_fallback()}, 0)
         WHERE i.name IN ({placeholders})
         """,
         list(item_codes),
