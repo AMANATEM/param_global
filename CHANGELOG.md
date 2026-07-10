@@ -4,6 +4,12 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.6.4] - 2026-07-10
+
+### Autoriser un prix négatif sur une ligne de vente
+
+- `Selling Settings.allow_negative_rates_for_items = 1` : nécessaire pour les lignes manuelles de type "REMISE" importées depuis Omag (remise ligne à ligne saisie comme un article manuel à prix négatif) — sans ce réglage, ERPNext rejette toute ligne à prix négatif, y compris ces remises légitimes.
+
 ## [1.6.3] - 2026-07-04
 
 ### Repli sur `dpa_historique` pour `dernier_prix_achat_ttc`

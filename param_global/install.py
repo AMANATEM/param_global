@@ -15,6 +15,12 @@ def apply_global_params():
     # rapports et apps.
     frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
 
+    # Autoriser un prix négatif sur une ligne de vente : nécessaire pour les
+    # lignes manuelles de type "REMISE" (remise ligne à ligne saisie comme un
+    # article manuel à prix négatif dans Omag) — sans ce réglage, ERPNext
+    # rejette toute ligne à prix négatif, y compris ces remises légitimes.
+    frappe.db.set_single_value("Selling Settings", "allow_negative_rates_for_items", 1)
+
     # Stock Settings
     frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1)
     frappe.db.set_single_value("Stock Settings", "stock_uom", "Unité")
