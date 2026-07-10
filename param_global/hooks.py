@@ -26,7 +26,12 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/param_global/css/param_global.css"
-app_include_js = "/assets/param_global/js/ui_defaults.js"
+# Bundle (et non chemin /assets brut) : `bundled_asset()` ne versionne QUE les
+# entrées « *.bundle.js » (résolues via assets.json vers le fichier haché) ; un
+# chemin /assets brut est servi SANS ?ver=, figé par le cache navigateur 1 an
+# (même correctif que bon_livraison/qz_print.bundle.js). Nom préfixé « pg_ » :
+# assets.json indexe les bundles par nom de fichier à plat, toutes apps confondues.
+app_include_js = "pg_ui_defaults.bundle.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/param_global/css/param_global.css"
@@ -84,6 +89,8 @@ doctype_list_js = {"Item": "public/js/item_list.js"}
 
 after_install = "param_global.install.after_install"
 after_migrate = "param_global.install.after_migrate"
+
+extend_bootinfo = "param_global.install.extend_bootinfo"
 
 doc_events = {
 	"Customer": {

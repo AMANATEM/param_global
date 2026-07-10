@@ -9,11 +9,26 @@ def after_migrate():
     apply_global_params()
 
 
+def extend_bootinfo(bootinfo):
+    # Nom d'utilisateur (champ `username`) affiché dans le header desk-wide
+    # (public/js/ui_defaults.js) — absent du bootinfo standard de Frappe.
+    bootinfo.user["username"] = frappe.db.get_value("User", frappe.session.user, "username")
+
+
 def apply_global_params():
     # Format des nombres : standard français (séparateur milliers « . », décimal
     # « , ») → 1.292,60. S'applique partout : écran, impression, PDF, tous les
     # rapports et apps.
     frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
+
+    # Désactiver la politique de mot de passe (score minimum zxcvbn) : accepte
+    # les mots de passe faibles (ex. "123456"), demandé par l'utilisateur pour
+    # simplifier la création de comptes de test sur cette instance.
+    frappe.db.set_single_value("System Settings", "enable_password_policy", 0)
+
+    # Autoriser la connexion par Nom d'utilisateur (en plus de l'email) : chaque
+    # utilisateur doit aussi avoir son champ `username` renseigné pour en profiter.
+    frappe.db.set_single_value("System Settings", "allow_login_using_user_name", 1)
 
     # Autoriser un prix négatif sur une ligne de vente : nécessaire pour les
     # lignes manuelles de type "REMISE" (remise ligne à ligne saisie comme un

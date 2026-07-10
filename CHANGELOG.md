@@ -4,6 +4,18 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.7.0] - 2026-07-10
+
+### Ajouté
+
+- Nom d'utilisateur (champ `username`) affiché en permanence, centré dans le header du desk, pour que l'utilisateur sache toujours avec quel compte il est connecté. Couleur d'accent dynamique selon la page courante (reprend la couleur « entête » propre à chaque doctype transactionnel — ex. rouge `#b91c1c` sur Retour, bleu `#2563eb` sur Devis, violet `#7c3aed` sur Bon de Commande…), repli sur le vert émeraude `#0f766e` si la page n'a pas de couleur dédiée. Alimenté via un nouveau hook `extend_bootinfo`.
+
+### Modifié
+
+- `System Settings.enable_password_policy = 0` : accepte les mots de passe faibles (ex. `123456`), pour simplifier la création de comptes de test.
+- `System Settings.allow_login_using_user_name = 1` : autorise la connexion par Nom d'utilisateur en plus de l'email (nécessite que le champ `username` soit renseigné sur la fiche de chaque utilisateur).
+- `public/js/ui_defaults.js` renommé en `public/js/pg_ui_defaults.bundle.js` et chargé en bundle versionné (au lieu d'un chemin `/assets` brut) : évite que les futurs changements de ce fichier restent bloqués jusqu'à 1 an par le cache navigateur (même correctif que `bon_livraison/qz_print.bundle.js`).
+
 ## [1.6.4] - 2026-07-10
 
 ### Autoriser un prix négatif sur une ligne de vente

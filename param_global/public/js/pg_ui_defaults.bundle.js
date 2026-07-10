@@ -27,6 +27,71 @@ $(function () {
 	if (frappe.views && frappe.views.ListView) {
 		frappe.views.ListView.prototype.setup_filterable = function () {};
 	}
+
+	if (!document.getElementById("param-navbar-username-style")) {
+		$("<style id='param-navbar-username-style'>")
+			.text(
+				"header.navbar > .container { position: relative; }\n" +
+				".pg-navbar-username { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);" +
+				" font-size: 15px; font-weight: 700; white-space: nowrap; pointer-events: none; }"
+			)
+			.appendTo("head");
+	}
+	_pg_show_navbar_username();
+});
+
+// Couleur d'accent par doctype transactionnel — reprend EXACTEMENT les couleurs
+// « entête » déjà posées par chaque app sur ses propres pages Form/List
+// (ex. retour.js/retour_list.js : .retour-entete-rouge { border-top: #b91c1c }).
+// Une seule source de vérité pour ces valeurs serait plus propre, mais chaque
+// app injecte son CSS de façon autonome (voir agents ayant audité ce pattern) ;
+// on duplique donc ici volontairement les valeurs plutôt que de centraliser.
+const PG_DOCTYPE_COLORS = {
+	"Delivery Note": "#0f766e", // Bon de Livraison
+	Retour: "#b91c1c",
+	Quotation: "#2563eb", // Devis
+	"Purchase Order": "#7c3aed", // Bon de Commande
+	"Purchase Receipt": "#111827", // Bon de Réception
+	"Stock Entry": "#ea580c", // Écriture de Stock
+	"Stock Reconciliation": "#78350f", // Réconciliation Stock
+};
+const PG_FALLBACK_COLOR = "#0f766e"; // Vert émeraude — couleur d'accent officielle par défaut
+
+// Affiche le Nom d'utilisateur (champ `username`, alimenté dans le bootinfo par
+// param_global.install.extend_bootinfo) centré dans le header, pour que
+// l'utilisateur sache toujours avec quel compte il est connecté. Reste vide
+// tant que le champ `username` n'est pas renseigné sur la fiche Utilisateur.
+function _pg_show_navbar_username() {
+	var $span = $("#pg-navbar-username");
+	if (!$span.length) {
+		var username = frappe.boot && frappe.boot.user && frappe.boot.user.username;
+		if (!username) return;
+		var $container = $("header.navbar > .container").first();
+		if (!$container.length) return;
+		$container.append(
+			"<span id='pg-navbar-username' class='pg-navbar-username'>" +
+				frappe.utils.escape_html(username) +
+				"</span>"
+		);
+		$span = $("#pg-navbar-username");
+	}
+	var dt = _pg_current_doctype();
+	$span.css("color", (dt && PG_DOCTYPE_COLORS[dt]) || PG_FALLBACK_COLOR);
+}
+
+// Doctype de la route courante (Liste ou Formulaire), pour la couleur d'accent.
+function _pg_current_doctype() {
+	try {
+		var r = frappe.get_route && frappe.get_route();
+		if (r && (r[0] === "List" || r[0] === "Form")) return r[1];
+	} catch (e) {
+		// ignore
+	}
+	return null;
+}
+
+$(document).on("page-change", function () {
+	_pg_show_navbar_username();
 });
 
 function _pg_show_pref() {
