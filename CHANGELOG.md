@@ -4,6 +4,16 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.8.0] - 2026-07-25
+
+### Ajouté
+
+- **Grilles des formulaires identiques pour tous les utilisateurs** (`grilles.py`) : la présentation des tables enfants (ensemble des colonnes, **ordre** et largeurs) est désormais imposée à chaque compte du desk, au lieu de dépendre des réglages personnels de chacun. Couvre 6 grilles : Bon de Livraison, Bon de Réception, Retour, Remise Bancaire, Écriture de Stock, Réconciliation de Stock.
+- Frappe stocke cette présentation dans `__UserSettings` sous la clé `GridView`, **par utilisateur** (`grid.js::setup_user_defined_columns()` en tire l'ensemble, l'ordre et la largeur des colonnes) : un compte qui n'a jamais réglé sa grille retombait sur le défaut Frappe, d'où des formulaires différents d'un utilisateur à l'autre.
+- Des Property Setters `in_list_view` / `columns` ne suffisaient pas : ils ne peuvent pas imposer l'**ordre** des colonnes, qui suit sinon celui des champs du doctype — or il en diffère sur 4 des 6 grilles (ex. Écriture de Stock : Article en 1re colonne, alors que le doctype place Entrepôt source avant).
+- Référence **figée dans le code** (dict `GRILLES`) et non relue en base, pour que dev et prod donnent le même résultat. Réappliqué à chaque `bench migrate` via `apply_global_params()` : pour faire évoluer une grille, la régler dans l'UI puis reporter les valeurs dans `GRILLES`.
+- Les autres préférences personnelles sont préservées (`last_view`, filtres et tri de liste, vue Rapport, Dashboard) ; le cache redis `_user_settings` est invalidé à l'écriture ; les doctypes/champs absents sont ignorés (site sans `remise_bancaire`, par exemple).
+
 ## [1.7.0] - 2026-07-10
 
 ### Ajouté

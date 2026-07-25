@@ -1,5 +1,7 @@
 import frappe
 
+from param_global.grilles import appliquer_grilles_utilisateurs
+
 
 def after_install():
     apply_global_params()
@@ -97,6 +99,10 @@ def apply_global_params():
     create_last_purchase_ttc_field()
     sync_last_purchase_ttc_all()
     create_tiers_fields()
+
+    # Présentation identique des grilles (tables enfants des formulaires) pour tous
+    # les utilisateurs du desk — cf. grilles.py pour le pourquoi du GridView.
+    appliquer_grilles_utilisateurs()
 
     frappe.db.commit()
 
