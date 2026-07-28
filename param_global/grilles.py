@@ -64,6 +64,14 @@ GRILLES = {
             ("depot_item", 1),
         ],
     },
+    "Purchase Order": {
+        "Purchase Order Item": [
+            ("item_code", 2),
+            ("qty", 1),
+            ("rate", 2),
+            ("amount", 2),
+        ],
+    },
     "Remise Bancaire": {
         "Remise Bancaire Ligne": [
             ("paiement_bl", 1),

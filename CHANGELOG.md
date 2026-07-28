@@ -4,6 +4,18 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.11.0] - 2026-07-28
+
+### Grille du Bon de Commande ajoutée à la référence
+
+Le `GridView` de **Purchase Order** n'existait que pour **un seul compte** (celui qui l'avait réglé dans l'UI), alors que les 6 autres grilles en ont un pour les 10 utilisateurs. Purchase Order manquait tout simplement dans le dict `GRILLES` : le réglage restait donc personnel, local à cette VM, et n'aurait jamais atteint la production par `git pull`.
+
+Colonnes ajoutées à la référence (`Purchase Order Item`) : `item_code` (2), `qty` (1), `rate` (2), `amount` (2) — somme 7, sous la limite de 10 imposée par `grid.js`.
+
+Après application : 10 utilisateurs ont le `GridView` Purchase Order, identique au réglage de référence — vérifié sur un compte tiers.
+
+> Rappel du mode d'emploi (déjà en tête de `grilles.py`) : pour faire évoluer une grille, la régler dans l'UI **puis reporter les valeurs dans `GRILLES`**. Sans ce report, le prochain `bench migrate` remet l'ancienne présentation, y compris pour celui qui vient de la changer.
+
 ## [1.10.0] - 2026-07-28
 
 ### Montants en saisie : 2 décimales au lieu de 4, sans toucher au calcul
