@@ -4,6 +4,25 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.9.0] - 2026-07-28
+
+### Avertissement « Stock Négatif » masqué
+
+- Nouveau module `stock_negatif.py` : neutralise `update_entries_after.validate_previous_sle_qty` (ERPNext), dont le seul effet est un `msgprint` bleu prévenant qu'une **entrée** arrive sur un article au solde **négatif** — typiquement un Retour client ou un Bon de Réception.
+- Motif : ERPNext ne contient que les mouvements de l'année en cours (migration Omag), donc **58,8 % des articles de PRINCIPAL sont en stock négatif** (2 404 sur 4 087 au 2026-07-28). L'avertissement se déclenchait en permanence, sur une situation connue et assumée, et finissait par être refermé sans être lu.
+- Rien n'est bloqué par ce message dans ERPNext : le masquer ne change **aucun** comportement, seulement l'affichage. La valorisation reste imparfaite sur ces articles — conséquence du périmètre de migration, pas de ce patch.
+- Branché sur `before_request` **et** `before_job`, les deux contextes d'exécution d'un document. Du code au niveau module de `hooks.py` ne conviendrait pas : hors `developer_mode`, `frappe.get_hooks()` sert les hooks depuis le cache redis sans réimporter le fichier.
+
+> À retirer le jour où PRINCIPAL repartira d'un inventaire physique propre.
+
+### Listes du desk : 500 lignes par défaut
+
+- `pg_ui_defaults.bundle.js` enveloppe `frappe.views.BaseList.prototype.setup_defaults` pour porter la longueur de page à **500** au lieu du défaut Frappe (100 sur grand écran, 20 sur petit). S'applique à **toutes les listes de toutes les apps**.
+- `500` fait partie des valeurs natives de pagination (`[20, 100, 500, 2500]`), donc le bouton correspondant s'affiche bien comme actif.
+- `selected_page_count` est posé en même temps : sans lui, le bouton « Plus » serait retombé à 20 lignes par page.
+- Les **rapports sauvegardés** conservent la longueur stockée dans leur document — comportement voulu, non modifié.
+- Valeur isolée dans la constante `PG_LONGUEUR_LISTE` en tête du bundle.
+
 ## [1.8.0] - 2026-07-25
 
 ### Ajouté

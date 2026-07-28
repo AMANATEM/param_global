@@ -28,6 +28,8 @@ $(function () {
 		frappe.views.ListView.prototype.setup_filterable = function () {};
 	}
 
+	_pg_patch_longueur_liste();
+
 	if (!document.getElementById("param-navbar-username-style")) {
 		$("<style id='param-navbar-username-style'>")
 			.text(
@@ -56,6 +58,38 @@ const PG_DOCTYPE_COLORS = {
 	"Stock Reconciliation": "#78350f", // Réconciliation Stock
 };
 const PG_FALLBACK_COLOR = "#0f766e"; // Vert émeraude — couleur d'accent officielle par défaut
+
+// Nombre de lignes affichées par défaut dans TOUTES les listes du desk (toutes
+// apps confondues). Frappe met 20 sur petit écran et 100 sur grand
+// (base_list.js : `this.page_length = frappe.is_large_screen() ? 100 : 20`).
+// 500 est l'une des valeurs proposées par la pagination native
+// (`paging_values = [20, 100, 500, 2500]`), donc le bouton correspondant
+// s'affiche bien comme actif.
+const PG_LONGUEUR_LISTE = 500;
+
+// On enveloppe `setup_defaults` de BaseList plutôt que de le réécrire : toutes
+// les vues (Liste, Rapport, Kanban…) en héritent et appellent `super()` en
+// premier, donc la valeur est posée juste après le défaut de Frappe et avant
+// que la sous-classe ne poursuive. Aucune d'elles ne retouche `page_length`
+// ensuite — sauf un **rapport sauvegardé**, qui applique la longueur stockée
+// dans le document (report_view.js), et c'est le comportement voulu.
+function _pg_patch_longueur_liste() {
+	if (!frappe.views || !frappe.views.BaseList) return;
+	var proto = frappe.views.BaseList.prototype;
+	if (proto._pg_longueur_liste_patchee) return;
+
+	var _setup_defaults_natif = proto.setup_defaults;
+	proto.setup_defaults = function () {
+		var resultat = _setup_defaults_natif.apply(this, arguments);
+		this.page_length = PG_LONGUEUR_LISTE;
+		// `selected_page_count` est la valeur que le bouton « 20 de plus »
+		// reprend (`this.page_length = this.selected_page_count || 20`) : sans
+		// elle, cliquer sur « Plus » retomberait à 20 lignes par page.
+		this.selected_page_count = PG_LONGUEUR_LISTE;
+		return resultat;
+	};
+	proto._pg_longueur_liste_patchee = true;
+}
 
 // Affiche le Nom d'utilisateur (champ `username`, alimenté dans le bootinfo par
 // param_global.install.extend_bootinfo) centré dans le header, pour que

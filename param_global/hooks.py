@@ -92,6 +92,14 @@ after_migrate = "param_global.install.after_migrate"
 
 extend_bootinfo = "param_global.install.extend_bootinfo"
 
+# Neutralise l'avertissement « Stock Négatif » d'ERPNext, omniprésent tant que
+# PRINCIPAL n'a pas d'inventaire d'ouverture (voir param_global/stock_negatif.py).
+# Les deux hooks couvrent les deux contextes d'exécution : requête web et tâche
+# de fond. Un simple import au niveau module ne suffirait pas — hors
+# developer_mode, `get_hooks()` sert le cache redis sans importer `hooks.py`.
+before_request = ["param_global.stock_negatif.avant_requete"]
+before_job = ["param_global.stock_negatif.avant_job"]
+
 doc_events = {
 	"Customer": {
 		"before_insert": "param_global.tiers.before_insert_customer",
