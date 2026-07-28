@@ -4,6 +4,30 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.10.0] - 2026-07-28
+
+### Montants en saisie : 2 décimales au lieu de 4, sans toucher au calcul
+
+Les champs prix (`rate`, `amount`, `prix_ht`…) portent un Property Setter `precision = 4`, posé volontairement par `bon_livraison` / `bon_reception` : Omag stocke des prix unitaires à 4 décimales (câble à **1,296 DH**, boulonnerie à **0,288 DH**). Mesuré sur les données réelles au 2026-07-28, arrondir à 2 décimales déplacerait **365,80 DH sur les BL** (jusqu'à **7,20 DH sur une seule ligne** : 1,296 × 1 800 m), **422,17 DH sur les BR** et 10,02 DH sur les Retours — pour une tolérance de réconciliation Omag de **0,02 DH**. Cette précision doit donc rester à 4.
+
+Le problème est que `precision` sert **à la fois** au calcul et à l'affichage : `ControlCurrency.get_precision()` renvoie `df.precision`, utilisé par `parse()` (arrondi de la saisie) **et** par `format_for_input()` (ce qui est visible). D'où « 40,0000 » en saisie, qui redevenait « 40,00 » à la validation.
+
+Correction : on redéfinit **uniquement** `format_for_input`, qui ne sert qu'à remplir l'input (`data.js` : `$input.val(this.format_for_input(value))`). Ni `parse()`, ni le stockage, ni le calcul ne sont touchés. On affiche le minimum utile, plancher à 2 décimales, jamais de zéros de remplissage :
+
+| Valeur réelle | Avant | Après |
+|---|---|---|
+| 40 | `40,0000` | **`40,00`** |
+| 135 | `135,0000` | **`135,00`** |
+| 0,5 | `0,5000` | **`0,50`** |
+| 1,296 | `1,2960` | `1,296` |
+| 10,0002 | `10,0002` | `10,0002` |
+
+Un prix ayant réellement 3 ou 4 décimales **continue de les afficher** : masquer un vrai `1,296` derrière `1,30` montrerait à l'écran un prix différent de celui appliqué.
+
+Vérifié en conditions réelles : `parse("1,296")` → `1.296`, `parse("0,2885")` → `0.2885`, aller-retour sans perte, précision du champ inchangée à 4.
+
+> ⚠️ Ne pas « simplifier » en passant la precision à 2 : ce serait rétablir exactement le bug d'arrondi que le Property Setter corrige, et casser la vérification de l'étape 7 du skill MAJBD.
+
 ## [1.9.0] - 2026-07-28
 
 ### Avertissement « Stock Négatif » masqué

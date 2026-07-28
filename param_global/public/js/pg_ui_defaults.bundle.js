@@ -29,6 +29,7 @@ $(function () {
 	}
 
 	_pg_patch_longueur_liste();
+	_pg_patch_affichage_montants();
 
 	if (!document.getElementById("param-navbar-username-style")) {
 		$("<style id='param-navbar-username-style'>")
@@ -58,6 +59,49 @@ const PG_DOCTYPE_COLORS = {
 	"Stock Reconciliation": "#78350f", // Réconciliation Stock
 };
 const PG_FALLBACK_COLOR = "#0f766e"; // Vert émeraude — couleur d'accent officielle par défaut
+
+// ─── Affichage des montants en saisie : 2 décimales, pas 4 ─────────────────
+// Nos champs prix (`rate`, `amount`, `prix_ht`…) portent un Property Setter
+// `precision = 4`, posé volontairement par bon_livraison/bon_reception : Omag
+// stocke des prix unitaires à 4 décimales (câble à 1,296 DH, boulonnerie à
+// 0,288 DH) et arrondir à 2 déplacerait jusqu'à 7,20 DH sur une seule ligne,
+// pour une tolérance de réconciliation Omag de 0,02 DH. Cette précision doit
+// donc rester à 4.
+//
+// Mais `precision` sert à la fois au calcul ET à l'affichage dans l'input :
+// `ControlCurrency.get_precision()` renvoie `df.precision`, utilisé par
+// `parse()` (arrondi de la saisie) et par `format_for_input()` (ce qu'on voit).
+// D'où « 40,0000 » en saisie qui redevient « 40,00 » à la validation.
+//
+// On ne redéfinit QUE `format_for_input`, qui n'est utilisé que pour remplir
+// l'input (data.js : `$input.val(this.format_for_input(value))`). Ni `parse()`,
+// ni le stockage, ni le calcul ne sont touchés : aucun risque sur les données.
+// Résultat : 40 → « 40,00 », 135 → « 135,00 », mais 1,296 reste « 1,296 ».
+// On affiche le minimum utile, jamais des zéros de remplissage.
+const PG_DECIMALES_MINI = 2;
+
+function _pg_patch_affichage_montants() {
+	const C = frappe.ui && frappe.ui.form && frappe.ui.form.ControlCurrency;
+	if (!C || C.prototype._pg_format_patche) return;
+
+	C.prototype.format_for_input = function (value) {
+		if (value === null || value === undefined || isNaN(Number(value))) return "";
+
+		const precision_champ = this.get_precision();
+		const valeur = flt(value, precision_champ);
+
+		// Décimales réellement significatives, plancher à 2, plafond à la précision du champ.
+		let decimales = PG_DECIMALES_MINI;
+		const texte = String(valeur);
+		const point = texte.indexOf(".");
+		if (point > -1) {
+			decimales = Math.min(precision_champ, Math.max(PG_DECIMALES_MINI, texte.length - point - 1));
+		}
+
+		return format_number(valeur, this.get_number_format(), decimales);
+	};
+	C.prototype._pg_format_patche = true;
+}
 
 // Nombre de lignes affichées par défaut dans TOUTES les listes du desk (toutes
 // apps confondues). Frappe met 20 sur petit écran et 100 sur grand
