@@ -4,6 +4,19 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.12.0] - 2026-07-30
+
+### Son du desk coupé pour tous les utilisateurs
+
+Valider un document (BL, Devis, Bon de Réception…) déclenchait un son : `frappe.utils.play_sound("submit")`, appelé par `form.js`. Frappe ne propose **aucun réglage système global** pour le couper — uniquement `User.mute_sounds`, une case **par utilisateur**, à 0 sur les 10 comptes.
+
+C'est donc le même cas de figure que `grilles.py` : un réglage stocké par utilisateur qu'il faut uniformiser depuis le code pour qu'il existe aussi en production. Nouveau module `sons.py`, appelé par `apply_global_params()` :
+
+- `mute_sounds = 1` pour tous les « System User » actifs ;
+- Property Setter posant le **défaut du champ à 1**, pour que tout compte créé plus tard hérite du son coupé sans attendre le prochain `bench migrate`.
+
+> Portée assumée : `mute_sounds` est un interrupteur global côté Frappe — il coupe **tous** les sons du desk (validation, annulation, suppression, erreur, e-mail), pas seulement celui de la validation. Ne cibler que le son de validation aurait exigé de surcharger `frappe.utils.play_sound` en JS pour filtrer sur l'argument `"submit"` ; le réglage natif a été préféré, choix validé avec l'utilisateur.
+
 ## [1.11.0] - 2026-07-28
 
 ### Grille du Bon de Commande ajoutée à la référence

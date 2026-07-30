@@ -1,6 +1,7 @@
 import frappe
 
 from param_global.grilles import appliquer_grilles_utilisateurs
+from param_global.sons import appliquer_son_muet
 
 
 def after_install():
@@ -103,6 +104,9 @@ def apply_global_params():
     # Présentation identique des grilles (tables enfants des formulaires) pour tous
     # les utilisateurs du desk — cf. grilles.py pour le pourquoi du GridView.
     appliquer_grilles_utilisateurs()
+
+    # Son du desk coupé pour tous les utilisateurs (validation, annulation…).
+    appliquer_son_muet()
 
     frappe.db.commit()
 
