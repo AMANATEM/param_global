@@ -36,12 +36,15 @@ import frappe
 GRILLES = {
     "Delivery Note": {
         "Delivery Note Item": [
-            ("item_code", 5),
+            # Article passe de 5 à 4 pour loger le prix d'achat : la somme des
+            # largeurs ne peut pas dépasser 10 (cf. commentaire ci-dessus).
+            ("item_code", 4),
             ("qty", 1),
             ("rate", 1),
-            ("amount", 1),
-            ("actual_qty", 1),
             ("warehouse", 1),
+            ("actual_qty", 1),
+            ("dernier_prix_achat_ttc", 1),
+            ("amount", 1),
         ],
     },
     "Purchase Receipt": {

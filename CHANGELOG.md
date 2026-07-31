@@ -4,6 +4,17 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.13.0] - 2026-07-31
+
+### Grille du Bon de Livraison : colonne « Dern Prix Achat » et nouvel ordre
+
+La grille des articles du BL passe à 7 colonnes, dans l'ordre réglé par l'utilisateur :
+`Code de l'Article (4)` · `Quantité` · `Prix` · `Entrepôt` · `Qté (Entrepôt)` · `Dern Prix Achat` · `Montant`.
+
+`item_code` passe de 5 à 4 pour loger la nouvelle colonne : la somme des largeurs ne peut pas dépasser 10, au-delà `grid.js` abandonne le rendu personnalisé.
+
+Le champ `dernier_prix_achat_ttc` est créé par `bon_livraison` 0.37.0 ; comme `param_global` applique les grilles avant lui à la migration, c'est un patch de `bon_livraison` qui garantit que le champ existe quand cette grille est écrite.
+
 ## [1.12.0] - 2026-07-30
 
 ### Son du desk coupé pour tous les utilisateurs
