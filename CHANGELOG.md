@@ -4,6 +4,25 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.15.0] - 2026-08-07
+
+### Export : Excel proposé par défaut au lieu de CSV
+
+Frappe déclare `default: "CSV"` en dur dans `data_exporter.js`. On ne touche pas au coeur : l'enveloppe `DataExporter` déjà posée par cette app (pré-cochage des colonnes de la liste) repose la valeur juste après la construction de la boîte, via `set_value` pour que le champ Select et le modèle du dialogue restent cohérents.
+
+### Listes : les filtres d'une visite précédente ne sont plus restaurés
+
+Frappe mémorise les filtres de chaque liste par utilisateur dans `__UserSettings` et les rejoue à l'ouverture (`list_view.js::setup_defaults`, branche « Priority 1 »). On actualisait la page et la liste revenait filtrée comme on l'avait laissée — gênant sur les listes Client et Fournisseur, alors que la liste des Bons de Livraison, elle, s'ouvre toujours propre.
+
+Uniformisé pour **toutes** les listes de **toutes** les apps : les filtres mémorisés sont retirés avant que Frappe ne les lise, ce qui le fait retomber sur la « Priority 2 » — les filtres par défaut déclarés par l'app dans ses `listview_settings`. Les défauts métier (masquer les articles désactivés, par exemple) restent donc appliqués : on n'efface que ce que l'utilisateur avait posé.
+
+`frappe.route_options` n'est **pas** touché : c'est le canal par lequel un lien ouvre une liste déjà filtrée (« voir les BL de ce client »). Le neutraliser casserait cette navigation, et il est de toute façon vide après une actualisation.
+
+⚠️ **Le point d'accroche est `BaseList.setup_defaults`, pas celui de `ListView`.** `this.user_settings` n'existe qu'à partir de `BaseList.setup_defaults()`, et le getter `view_user_settings` le déréférence sans garde. Une première version s'accrochait avant `ListView.setup_defaults` — donc avant son `super.setup_defaults()` — et levait `Cannot read properties of undefined (reading 'List')`, ce qui **vidait toutes les listes du desk**. On enveloppe donc `BaseList` et on supprime après l'appel original, avec un `try/catch` : ce patch est du confort d'affichage, il ne doit jamais pouvoir empêcher une liste de s'afficher.
+
+Vérifié dans Chrome sur Client, Fournisseur, Article, Bon de Livraison, Bon de Réception, Retour, Paiement BL, Devis et Écriture de Stock : filtre posé puis actualisation → filtre effacé et liste complète, aucune erreur console.
+
+
 ## [1.14.0] - 2026-08-07
 
 ### Export de liste : les colonnes affichées sont pré-cochées

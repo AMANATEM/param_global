@@ -256,3 +256,64 @@ $(document).on("page-change", function () {
 		});
 	}
 })();
+
+// ── Listes : ne jamais restaurer les filtres d'une visite précédente ─────────
+//
+// Frappe mémorise les filtres de chaque liste par utilisateur dans
+// `__UserSettings` et les rejoue à l'ouverture (list_view.js::setup_defaults,
+// branche « Priority 1: view_user_settings »). Conséquence : on actualise la
+// page et la liste revient filtrée comme on l'avait laissée — comportement
+// signalé comme gênant sur les listes Client et Fournisseur, alors que la liste
+// des Bons de Livraison, elle, s'ouvre toujours propre.
+//
+// On uniformise ici pour TOUTES les listes de TOUTES les apps : on retire les
+// filtres sauvegardés avant que Frappe ne les lise, ce qui le fait retomber sur
+// la « Priority 2 » — les filtres par défaut déclarés par l'app dans ses
+// `listview_settings`. Ces défauts métier (ex. masquer les articles désactivés)
+// restent donc appliqués : on n'efface que ce que l'utilisateur avait posé.
+//
+// ⚠️ On ne touche PAS à `frappe.route_options` : c'est le canal par lequel un
+// lien ouvre une liste déjà filtrée (« voir les BL de ce client »). Le neutraliser
+// casserait cette navigation. Il est de toute façon vide après une actualisation,
+// puisqu'il ne vit qu'en mémoire.
+// ⚠️ Le point d'accroche est `BaseList.setup_defaults`, PAS celui de ListView.
+// `this.user_settings` n'existe qu'à partir de `BaseList.setup_defaults()` (elle
+// y fait `this.user_settings = frappe.get_user_settings(this.doctype)`), et le
+// getter `view_user_settings` le déréférence sans garde. S'accrocher AVANT
+// `ListView.setup_defaults` — donc avant son `super.setup_defaults()` — lève
+// « Cannot read properties of undefined (reading 'List') » et **vide toutes les
+// listes du desk** (constaté le 2026-08-06). On enveloppe donc BaseList et on
+// supprime APRÈS l'appel original : ListView lit les filtres juste ensuite,
+// dans la foulée de son `super`.
+(function () {
+	function pg_sans_filtres_memorises() {
+		if (!frappe.views || !frappe.views.BaseList) return false;
+		const proto = frappe.views.BaseList.prototype;
+		if (proto.pg_filtres_non_restaures) return true;
+
+		const original = proto.setup_defaults;
+		proto.setup_defaults = function () {
+			const retour = original.apply(this, arguments);
+			// Filet : ce patch est du confort d'affichage. Quoi qu'il arrive ici,
+			// il ne doit jamais empêcher une liste de s'afficher.
+			try {
+				const vus = this.user_settings && this.user_settings[this.view_name];
+				if (vus && Array.isArray(vus.filters)) {
+					delete vus.filters;
+				}
+			} catch (e) {
+				console.warn("param_global : filtres mémorisés non effacés", e);
+			}
+			return retour;
+		};
+		proto.pg_filtres_non_restaures = true;
+		return true;
+	}
+
+	// BaseList peut ne pas être encore chargée au moment où ce bundle s'exécute
+	// (list.bundle.js est chargé à la demande) : on retente à chaque navigation
+	// tant que le patch n'a pas pu être posé.
+	if (!pg_sans_filtres_memorises()) {
+		$(document).on("page-change", pg_sans_filtres_memorises);
+	}
+})();

@@ -44,6 +44,15 @@ function pg_enveloppe_exportateur(classe) {
 		make_dialog() {
 			super.make_dialog();
 
+			// Type de fichier : Excel par défaut au lieu de CSV.
+			// Frappe déclare `default: "CSV"` en dur dans data_exporter.js ; on ne
+			// touche pas au coeur, on repose la valeur juste après la construction
+			// de la boîte. `set_value` (et non un simple .val()) pour que le champ
+			// Select et le modèle du dialogue restent cohérents.
+			if (this.dialog.get_field("file_type")) {
+				this.dialog.set_value("file_type", "Excel");
+			}
+
 			// on_page_show est déclenché sur « shown.bs.modal », donc après le
 			// retour de make_dialog() : on s'enchaîne dessus, sauf si la boîte
 			// est déjà affichée (l'événement est alors déjà passé).
