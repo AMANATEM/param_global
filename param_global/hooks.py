@@ -31,7 +31,7 @@ app_license = "mit"
 # chemin /assets brut est servi SANS ?ver=, figé par le cache navigateur 1 an
 # (même correctif que bon_livraison/qz_print.bundle.js). Nom préfixé « pg_ » :
 # assets.json indexe les bundles par nom de fichier à plat, toutes apps confondues.
-app_include_js = "pg_ui_defaults.bundle.js"
+app_include_js = ["pg_ui_defaults.bundle.js", "pg_export_defaults.bundle.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/param_global/css/param_global.css"

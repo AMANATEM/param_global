@@ -4,6 +4,16 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.14.0] - 2026-08-07
+
+### Export de liste : les colonnes affichées sont pré-cochées
+
+Dans la boîte « Exporter des données », Frappe décochait tout à chaque ouverture (`on_page_show: () => this.select_mandatory()` dans `data_exporter.js`) et ne recochait que les champs obligatoires : toutes les colonnes réellement visibles dans la liste (Code Client, Tél, Statut…) devaient être cochées à la main.
+
+Nouveau bundle `pg_export_defaults.bundle.js` (ajouté à `app_include_js`, qui devient une liste) : après le `select_mandatory()` d'origine, il coche en plus les colonnes de la liste courante lues dans `cur_list.columns`. Les obligatoires restent cochés, donc le fichier exporté reste réimportable, et le bouton « Sélectionner Obligatoirement » garde son comportement d'origine.
+
+Détails : la colonne Statut est un indicateur sans champ derrière — elle est mappée sur `status` / `disabled` quand le doctype porte l'un de ces champs. Le pré-cochage ne s'applique que si `cur_list.doctype` correspond au doctype exporté (donc pas d'effet sur l'export lancé depuis le doctype *Data Import*). `DataExporter` vivant dans un bundle chargé à la demande, la classe est enveloppée via un accesseur posé sur `frappe.data_import`.
+
 ## [1.13.0] - 2026-07-31
 
 ### Grille du Bon de Livraison : colonne « Dern Prix Achat » et nouvel ordre
