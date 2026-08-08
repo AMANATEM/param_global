@@ -4,6 +4,36 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.17.0] - 2026-08-08
+
+### Les nombres au standard français : saisie et affichage
+
+Nouveau bundle `pg_nombres.bundle.js` (ajouté à `app_include_js`) plus `float_precision = 2` dans `apply_global_params()`. Trois problèmes distincts, une même cause racine : le format `#.###,##`.
+
+**1. Le point saisi valait cent fois trop.** Dans ce format, le point est le séparateur de **milliers** : Frappe le supprime au parsing.
+
+```
+flt("12.50")  -> 1250      flt("443.88") -> 44388      flt("0.5") -> 5
+```
+
+Or le pavé numérique ne porte qu'un point. Un prix ou une quantité saisis au pavé entraient donc cent fois trop grands, **sans aucun message** — risque comptable sur un Bon de Réception ou un Paiement, erreur de stock sur une quantité. La touche est désormais interceptée et écrit une virgule : on voit immédiatement ce qui sera enregistré. Tous les champs numériques sont couverts (`Currency`, `Float`, `Percent`, `Int`) ; `Duration`, `Rating` et les champs non numériques ne le sont pas, un point y étant légitime.
+
+Conversion **à la frappe et non au parsing** : convertir au parsing serait invisible mais casserait les valeurs légitimes, Frappe reformatant les champs au blur en « 1.234,56 » où le point est un vrai séparateur de milliers. En n'agissant que sur la touche pressée, on ne touche jamais aux valeurs posées par le programme. Le collage n'est pas traité — une valeur collée peut contenir un vrai séparateur de milliers, on ne veut pas avoir à le deviner.
+
+**2. Les quantités rondes perdaient leurs décimales.** `float_precision` passe de 3 à 2, mais ça ne suffisait pas : le formateur Float retire les décimales quand la partie fractionnaire est nulle (`formatters.js` : « show 1.000000 as 1 »), sauf si on lui passe `always_show_decimals`. Les vues Rapport le passent, pas les formulaires ni les grilles — d'où « 1 » à côté de « 2,50 » dans la même colonne. Le drapeau est forcé une fois pour toutes. `Int` n'est pas touché : un entier n'a pas de décimale.
+
+⚠️ `float_precision` gouverne l'affichage **et** l'arrondi de `flt()` : les quantités sont donc arrondies à 2 décimales à l'enregistrement. Assumé — 12 lignes importées d'Omag à 3 décimales sont concernées (3,58 DH au total). Le prochain passage de `majbd` les réimportera arrondies, ce qui peut faire apparaître quelques dixièmes de dirham sur 6 clients à la vérification des soldes. `conversion_factor` valant 1 partout, aucune conversion d'unité n'est touchée.
+
+**3. Les montants affichaient tantôt 2, tantôt 4 décimales.** « 35,36 » sur une ligne, « 42,4320 » sur la suivante. En cause, les Property Setters `precision = 4` posés volontairement par `bon_livraison` et `bon_reception` sur `rate` / `amount` / `prix_ht` : le formateur Currency ne retombe à 2 décimales que si la valeur en compte **moins de 3** (`formatters.js`, bloc « a company in UAE »).
+
+L'**affichage seul** est corrigé, jamais la précision stockée : repasser `amount` à 2 décimales déplacerait 4 526 lignes de BL et 992 de BR (~15 DH), donc les `grand_total` que la réconciliation Omag compare à 0,01 DH près par client. Le `docfield` est **cloné** avant qu'on y force la précision — le muter aurait cassé les calculs, qui lisent la même propriété. Et seul le formateur est enveloppé, pas `format_for_input()` : cliquer dans un prix affiche toujours ses 4 décimales réelles, donc aucune troncature silencieuse en sortant du champ.
+
+### Un réglage System Settings n'était appliqué qu'à moitié
+
+`float_precision` restait à 3 côté navigateur alors que la base disait 2. `frappe.db.set_single_value` n'écrit que dans `tabSingles` et court-circuite le cycle de vie du document : le `on_update` de System Settings, qui recopie chaque champ modifié dans `tabDefaultValue` (`system_settings.py::set_defaults`), ne se déclenchait jamais. Or c'est `tabDefaultValue` qui alimente `frappe.boot.sysdefaults`, la source lue par le desk.
+
+**Le défaut touchait tout `apply_global_params()`**, pas seulement ce réglage : chaque valeur y était posée correctement côté serveur et ignorée côté navigateur. `number_format` s'en sortait par hasard, sa valeur ayant été propagée à un moment donné ; sur un site prod neuf il aurait été faux aussi. Nouveau helper `_param_systeme()` qui écrit aux deux endroits.
+
 ## [1.16.0] - 2026-08-08
 
 ### Recherche multi-mots : la validation par Entrée est rétablie sur les champs Link

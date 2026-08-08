@@ -18,11 +18,48 @@ def extend_bootinfo(bootinfo):
     bootinfo.user["username"] = frappe.db.get_value("User", frappe.session.user, "username")
 
 
+def _param_systeme(champ, valeur):
+    """Écrit un réglage System Settings AUX DEUX endroits où Frappe le lit.
+
+    `set_single_value` n'écrit que dans `tabSingles` et court-circuite le cycle de
+    vie du document : le `on_update` de System Settings, qui recopie chaque champ
+    modifié dans `tabDefaultValue` via `frappe.db.set_default`, ne se déclenche
+    donc jamais (cf. `system_settings.py::set_defaults`).
+
+    Or c'est `tabDefaultValue` qui alimente `frappe.boot.sysdefaults`, la source
+    lue par le desk pour formater les nombres. Un réglage posé seulement dans
+    `tabSingles` est donc appliqué à MOITIÉ : correct côté serveur, ignoré côté
+    navigateur. Symptôme constaté : `float_precision` à 2 en base et les grilles
+    qui continuaient d'afficher « 1,500 ».
+    """
+    frappe.db.set_single_value("System Settings", champ, valeur)
+    frappe.db.set_default(champ, valeur)
+
+
 def apply_global_params():
     # Format des nombres : standard français (séparateur milliers « . », décimal
     # « , ») → 1.292,60. S'applique partout : écran, impression, PDF, tous les
     # rapports et apps.
-    frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
+    _param_systeme("number_format", "#.###,##")
+
+    # Deux décimales partout, y compris les quantités : 1 s'affiche « 1,00 » et
+    # 2,5 « 2,50 ». Frappe met `float_precision` à 3 par défaut, ce qui donnait des
+    # quantités en « 1,500 » face à des montants en « 1,50 » — deux standards
+    # d'affichage côte à côte dans la même grille.
+    #
+    # ⚠️ `float_precision` gouverne à la fois l'AFFICHAGE et l'ARRONDI de `flt()` :
+    # une quantité est donc désormais arrondie à 2 décimales à l'enregistrement.
+    # Assumé — les seules valeurs concernées sont 12 lignes importées d'Omag à 3
+    # décimales (0,333 / 0,725 / 9,304…), soit 3,58 DH au total. Le prochain passage
+    # du skill `majbd` les réimportera arrondies, ce qui peut faire apparaître
+    # quelques dixièmes de dirham d'écart sur 6 clients à l'étape de vérification
+    # des soldes. `conversion_factor` valant 1 partout, les conversions d'unité ne
+    # sont pas touchées.
+    #
+    # Ne concerne PAS les précisions de CALCUL à 4 décimales posées par
+    # `bon_livraison` et `bon_reception` sur les prix de ligne (`rate`, `amount`,
+    # `prix_ht`) : ce sont des Property Setters par champ, sur des champs Currency.
+    _param_systeme("float_precision", "2")
 
     # Désactiver la politique de mot de passe (score minimum zxcvbn) : accepte
     # les mots de passe faibles (ex. "123456"), demandé par l'utilisateur pour
