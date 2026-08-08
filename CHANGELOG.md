@@ -4,6 +4,30 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.16.0] - 2026-08-08
+
+### Recherche multi-mots : la validation par Entrée est rétablie sur les champs Link
+
+Le dropdown affichait le bon résultat, mais **Entrée ne faisait rien** — ni sélection, ni message. Signalé sur le Code de l'Article d'un Bon de Réception (« rlx 3x2.5 » trouve bien « RLX CABLE SOUPLE 3X2.5 IMACAB NEXANS », sans pouvoir le valider).
+
+Cause : Frappe annule la sélection au clavier si le texte saisi n'est pas une **sous-chaîne contiguë** du libellé ou de la description du résultat surligné (`link.js`, gestionnaire `awesomplete-select` → `input_matches_item`). Or toutes nos recherches serveur (`recherche_article`, `recherche_client`, `recherche_fournisseur`, `article_query`) découpent la saisie en jetons et n'exigent que la présence de chacun, dans n'importe quel ordre. Les deux logiques sont incompatibles par construction.
+
+Nouveau bundle `pg_link_search.bundle.js` (ajouté à `app_include_js`) : `ControlLink.prototype.input_matches_item` accepte désormais le **même critère que le serveur** — chaque jeton présent dans le libellé ou la description. Le test natif de sous-chaîne contiguë reste la voie rapide, appelé en premier : on n'accepte que davantage, jamais moins. Le garde-fou garde son rôle, une saisie dont un mot est absent du résultat surligné est toujours refusée.
+
+Posé sur le prototype, le correctif couvre d'un coup les **11 champs** touchés, qui passent tous par cette classe :
+
+- **Grille articles** : Bon de Réception → Code de l'Article.
+- **En-tête tiers** : Bon de Réception et Bon de Commande → Fournisseur ; Bon de Livraison, Devis (Dynamic Link `party_name`), Paiement BL et Retour → Client ; Paiement BR → Fournisseur. Sur ces champs, « code + nom » (`F000208 AABDOLLAH`) échouait déjà à cause du séparateur « — » du libellé.
+- **Filtres de rapport** : Relevé Client, Relevé Client Détaillé → Client ; Historique des Mouvements → Article. C'était le cas le plus pénalisant : le filtre gardait le texte brut, le rapport ne se lançait pas et n'affichait aucune erreur.
+
+Les contournements maison déjà en place — `select_article_then_qty` (BL, Devis, Bon de Commande, Retour) et `select_link_then_focus` (Écriture de Stock, Réconciliation de Stock), qui posent la valeur eux-mêmes sans passer par le `select()` d'awesomplete — deviennent redondants mais continuent de fonctionner ; vérifié sans régression.
+
+Effet de bord bénéfique, mesuré en A/B : dans l'Écriture de Stock et la Réconciliation de Stock, `get_awesomplete_first_val()` retenait toujours la **1ʳᵉ** ligne du dropdown en ignorant celle surlignée aux flèches — on choisissait un article et un autre entrait, en silence. Comme la sélection native aboutit maintenant et ferme la liste avant que ce code ne s'exécute, il ne réécrit plus rien. Les deux fonctions restent à aligner sur la version du BL le jour où ces apps sont retouchées.
+
+⚠️ **Fragilité connue.** Le patch se greffe sur une méthode interne de Frappe. Si une montée de version la renomme ou la supprime, il cesse de s'appliquer **en silence** et les 11 champs se recassent. Un `console.warn` est émis dans ce cas. **Après toute montée de version de Frappe, retester « rlx 3x2.5 » + Entrée sur un Bon de Réception.**
+
+⚠️ **Déploiement.** `bench migrate` ne compile pas les assets JS et `public/dist/` est ignoré par git : le bundle ne voyage donc pas avec `git pull`. La promotion en prod exige **`bench build --app param_global`**, puis `clear-cache` et un `supervisorctl restart all` (`hooks.py` a changé, gunicorn garde `app_include_js` en cache). Côté navigateur, le boot du desk étant en cache `localStorage`, chaque utilisateur doit vider les données de site — un Ctrl+Shift+R ne suffit pas.
+
 ## [1.15.0] - 2026-08-07
 
 ### Export : Excel proposé par défaut au lieu de CSV
