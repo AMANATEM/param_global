@@ -4,6 +4,24 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.18.0] - 2026-08-12
+
+### Grille du Devis : colonne « Dern Prix Achat » et nouvelle répartition
+
+Pendant du travail fait sur le Bon de Livraison en 1.13.0, transposé au Devis. Le dict `GRILLES` gagne une entrée `Quotation` :
+
+```
+Code de l'Article (4) · Quantité (1) · Prix (2) · Dern Prix Achat (2) · Montant (1)  = 10
+```
+
+La grille était auparavant absente de `GRILLES` — chaque utilisateur avait donc la sienne, au gré de son `__UserSettings`. Elle est désormais imposée à tous, comme celles du BL, du BR et des autres documents transactionnels.
+
+`Quantité` passe de 2 à 1 et `Montant` de 2 à 1 pour loger la nouvelle colonne : la somme des largeurs ne peut pas dépasser 10, sinon `grid.js` abandonne le rendu personnalisé et une colonne disparaît en silence.
+
+⚠️ Cette entrée référence `Quotation Item.dernier_prix_achat_ttc`, créé par **`devis` >= 0.15.0**. Les deux apps doivent être promues ensemble : `_gridview_existant()` écarte un champ absent, ce qui masquerait la colonne pour tous les utilisateurs. `devis` republie d'ailleurs les grilles après création de ses champs, `param_global` tournant avant lui dans l'ordre des `after_migrate`.
+
+**Fichiers touchés** — `grilles.py`
+
 ## [1.17.0] - 2026-08-08
 
 ### Les nombres au standard français : saisie et affichage

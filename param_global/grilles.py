@@ -75,6 +75,18 @@ GRILLES = {
             ("amount", 2),
         ],
     },
+    "Quotation": {
+        "Quotation Item": [
+            # Article passe de 5 à 4 et Qté de 2 à 1 pour loger le prix d'achat :
+            # la somme des largeurs ne peut pas dépasser 10 (cf. commentaire en
+            # tête de fichier), et la grille était déjà pile au plafond.
+            ("item_code", 4),
+            ("qty", 1),
+            ("rate", 2),
+            ("dernier_prix_achat_ttc", 2),
+            ("amount", 1),
+        ],
+    },
     "Remise Bancaire": {
         "Remise Bancaire Ligne": [
             ("paiement_bl", 1),
