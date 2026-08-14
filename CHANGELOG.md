@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.19.0] - 2026-08-14
+
+### Grille du Bon de Réception : « Prix » brut et « Remise % » saisissable
+
+L'entrée `Purchase Receipt` de `GRILLES` suit le découpage introduit par `bon_reception` 0.31.0 :
+
+```
+Code de l'Article (4) · Quantité (1) · Prix (1) · Prix HT (1) · Remise % (1) · Montant (1) · Entrepôt (1)  = 10
+```
+
+Deux échanges à somme nulle, la grille reste donc à 10 :
+
+- `rate` → **`price_list_rate`** : la colonne Prix porte désormais le prix **brut** fournisseur. `rate` (prix net) sort de la grille — c'est le Montant qui le donne.
+- `discount_amount` → **`discount_percentage`** : l'ancienne colonne était un champ **calculé** (`price_list_rate − rate`) que la saisie ne pilotait pas, au point d'afficher des remises négatives.
+
 ## [1.18.0] - 2026-08-12
 
 ### Grille du Devis : colonne « Dern Prix Achat » et nouvelle répartition

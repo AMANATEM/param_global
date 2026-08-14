@@ -48,13 +48,17 @@ GRILLES = {
         ],
     },
     "Purchase Receipt": {
+        # `price_list_rate` (« Prix ») porte le prix BRUT saisi et `discount_percentage`
+        # (« Remise % ») la remise fournisseur : ERPNext en déduit `rate` (prix net),
+        # hors grille, qui donne le Montant. L'ancienne colonne `discount_amount` était
+        # un champ CALCULÉ (price_list_rate − rate) que la saisie ne pilotait pas.
         "Purchase Receipt Item": [
             ("item_code", 4),
             ("qty", 1),
-            ("rate", 1),
+            ("price_list_rate", 1),
             ("prix_ht", 1),
+            ("discount_percentage", 1),
             ("amount", 1),
-            ("discount_amount", 1),
             ("warehouse", 1),
         ],
     },
