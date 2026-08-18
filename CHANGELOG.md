@@ -4,6 +4,24 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.20.0] - 2026-08-18
+
+### Verrou administrateur : mot de passe redemandé pour les écrans d'argent
+
+Nouveau module `verrou.py`, socle partagé par `caisse`, `verification` et `rapport`. Trois zones, chacune avec sa durée : **`caisse` 5 min**, **`encaissements` 5 min**, **`verification` 1 h**. Le délai est **absolu** — il court à partir de la saisie du mot de passe et ne se prolonge pas avec l'activité.
+
+Pourquoi ce module doit exister : `frappe.permissions.has_permission()` commence par `if user == "Administrator": return True`. **Aucun rôle, aucune permission ne peut donc protéger une session Administrator laissée ouverte au comptoir** — et c'est précisément le risque, puisque l'administration travaille sous ce compte et que les 9 comptes du personnel sont tous `System Manager`. Le verrou est donc un état explicite, tenu côté serveur, que chaque endpoint sensible consulte lui-même via `exiger()` ou `est_deverrouille()`. Un contrôle posé uniquement dans le navigateur serait un décor : il suffirait d'appeler la méthode whitelistée à la main.
+
+* État en redis, indexé sur le **`sid` de la session** : déverrouiller au bureau n'ouvre rien sur le poste du comptoir. C'est le TTL de la clé, et lui seul, qui porte l'expiration.
+* Mot de passe vérifié contre le compte `Administrator` (`frappe.utils.password.check_password`). **5 essais ratés → 15 min de blocage** : sans ce compteur, un mot de passe se teste en boucle depuis la console du navigateur, le dialogue n'étant qu'un appel whitelisté de plus.
+* `appel_direct()` distingue les appels HTTP des appels Python internes — `verification` appelle les fonctions de `caisse` en interne, un garde-fou aveugle casserait la vérification journalière dès que la zone `caisse` est refermée.
+
+Côté desk, `pg_verrou.bundle.js` (chargé desk-wide) apporte `proteger()`, `demander()` et `veiller()`. Ce dernier **referme l'écran à l'expiration sans attendre une navigation** : sans lui, le serveur a beau refuser les nouvelles requêtes, les chiffres déjà affichés restent lisibles indéfiniment.
+
+Le champ de saisie est un **`Data` masqué en CSS** (`-webkit-text-security`) et non un `Password` : Chrome ne propose d'enregistrer un mot de passe, et ne déroule sa liste de comptes, que sur un `<input type="password">`. C'est le seul moyen fiable — `autocomplete="off"` est ignoré par Chrome sur un vrai champ mot de passe. En renfort, `id`/`name` aléatoires (Chrome classe aussi les champs d'après ces attributs) et `data-lpignore`.
+
+**Fichiers touchés** — `verrou.py` (nouveau), `public/js/pg_verrou.bundle.js` (nouveau), `hooks.py`
+
 ## [1.19.0] - 2026-08-14
 
 ### Grille du Bon de Réception : « Prix » brut et « Remise % » saisissable
