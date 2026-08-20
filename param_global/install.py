@@ -17,6 +17,16 @@ def extend_bootinfo(bootinfo):
     # (public/js/ui_defaults.js) — absent du bootinfo standard de Frappe.
     bootinfo.user["username"] = frappe.db.get_value("User", frappe.session.user, "username")
 
+    # Environnement du site, lu depuis site_config.json (clé `environnement`) et
+    # consommé par public/js/pg_environnement.bundle.js, qui signale les desks
+    # NON-production. Ce fichier de config vit hors git et survit à un
+    # `bench restore` : c'est la seule donnée qui reste propre à sa machine alors
+    # que le code et la base voyagent de la DEV vers la PROD.
+    #
+    # Clé absente = production, donc aucun marquage : c'est la valeur sûre pour
+    # l'écran des utilisateurs finaux. La clé se pose sur la machine de DEV.
+    bootinfo["environnement"] = (frappe.conf.get("environnement") or "").strip().upper()
+
 
 def _param_systeme(champ, valeur):
     """Écrit un réglage System Settings AUX DEUX endroits où Frappe le lit.

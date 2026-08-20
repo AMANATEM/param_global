@@ -4,6 +4,30 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.21.0] - 2026-08-20
+
+### Repère d'environnement — le desk de DEV ne ressemble plus à la production
+
+La VM de développement est un clone de la prod : mêmes données, même interface, mêmes identifiants. Rien à l'écran ne disait sur laquelle des deux on travaillait — alors qu'une saisie faite en dev est perdue au prochain `bddevprod`, et qu'un geste cru « de test » passé en prod ne se rattrape pas.
+
+Tout site qui n'est **pas** la production affiche désormais une **barre de navigation ambre** portant « DEV — CE N'EST PAS LA PRODUCTION », et un titre d'onglet préfixé `[DEV]` — ce dernier pour distinguer deux onglets ouverts côte à côte sans avoir à cliquer.
+
+⚠️ **La PRODUCTION reste strictement intacte** : ni teinte, ni libellé, ni préfixe de titre. C'est la règle de conception, pas un effet de bord — l'écran des utilisateurs finaux ne doit rien porter de plus.
+
+La bascule est la clé `environnement` de `site_config.json`, exposée dans le bootinfo par `extend_bootinfo`. Ce fichier est le seul qui reste **propre à sa machine** : hors git (donc `git pull` ne le copie pas) et hors du périmètre de `bench restore` (donc `bddevprod` ne le contamine pas), là où le code des apps et la base voyagent tous deux de la DEV vers la PROD.
+
+**Clé absente = production**, donc aucun marquage : rien à configurer sur le serveur de prod, et une machine oubliée s'affiche comme production plutôt que de donner un faux sentiment de sécurité.
+
+Choix de rendu :
+
+* **ambre clair et non fond sombre** — le texte de la navbar reste celui de Frappe, dont le nom d'utilisateur que `pg_ui_defaults` place au centre de cette même barre ; un fond sombre aurait obligé à repeindre les icônes et ce nom, bien au-delà d'un simple repère ;
+* **le complément de phrase disparaît sous 768 px** — la navbar d'un téléphone n'a pas la place, et « DEV » seul suffit à alerter ;
+* **rien ne sort à l'impression** — un bon de livraison imprimé depuis la dev ne doit pas être barbouillé d'ambre.
+
+Le préfixe de titre passe par `frappe.utils.set_title_prefix`, mécanisme natif que **personne d'autre n'utilise** dans Frappe : le préfixe se réapplique seul à chaque changement de titre, sans patcher quoi que ce soit. Repli manuel au tout premier chargement, où `frappe._original_title` vaut encore `undefined` et ferait échouer le `.replace()` interne.
+
+**Fichiers touchés** — `public/js/pg_environnement.bundle.js` (nouveau), `install.py`, `hooks.py`
+
 ## [1.20.0] - 2026-08-18
 
 ### Verrou administrateur : mot de passe redemandé pour les écrans d'argent
