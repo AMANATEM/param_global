@@ -4,6 +4,24 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.22.0] - 2026-08-22
+
+### Le tri des listes de recherche d'articles, la file des Entrée, et les lettres refusées dans les champs numériques
+
+**Tri de la liste d'articles par clic sur un titre de colonne** (`public/js/pg_tri_dropdown.bundle.js`) — 1er clic descendant, 2e ascendant, flèche affichée. Le même dropdown étant dupliqué **sept fois** (BL, Retour, Devis, BC, BR, Écriture de Stock, Réconciliation), le tri est posé une seule fois ici : il reconnaît les en-têtes à leur suffixe de classe commun et trie sur l'indice de colonne, sans rien savoir du domaine.
+
+⚠️ **Le tri porte sur TOUT le catalogue filtré, pas sur les lignes affichées** (`recherche_articles.py`). Un tri purement local aurait donné une réponse **fausse** : demander « les articles en stock au garage » sur une recherche qui en compte 255 n'aurait montré que les rares en stock parmi les 70 premiers codes. La colonne et le sens partent donc dans la requête, le `ORDER BY` se fait en SQL **avant le `LIMIT`**, et la fenêtre passe de **20 à 70 résultats**. Les six fonctions `recherche_article` des apps y sont branchées ; les jointures (prix, stocks, TVA) ne sont posées que si l'on trie dessus, donc la frappe courante garde exactement la requête d'avant (50 ms sans tri, ~100 ms avec).
+
+⚠️ **« Dern. achat » ne se calcule pas pareil d'une app à l'autre** et le tri doit porter sur la valeur **affichée** : `bon_livraison` montre `dernier_prix_achat_ttc`, les cinq autres recalculent `last_purchase_rate × (1 + TVA)`. La multiplication n'étant pas monotone — 100 HT à 20 % passe devant 110 HT à 0 % —, trier sur le HT aurait réordonné la colonne sur un chiffre que personne ne voit.
+
+⚠️ **Le tri ne vaut que pour la recherche en cours** : effacer le champ et chercher un autre article le remet à zéro, flèche comprise, et la requête repart sans tri.
+
+**Aucune Entrée perdue dans les grilles** (`public/js/pg_grille_entree.bundle.js`). La navigation Article → Quantité → Prix → ligne suivante déplace le curseur dans un `setTimeout` de 150 à 250 ms ; une 2ᵉ Entrée frappée dans cet intervalle retombait sur le **même** champ et rejouait la même étape — le curseur s'arrêtait sur le Prix, la touche semblait « ne pas prendre ». Elle est désormais mise en file puis rejouée sur le champ qui reçoit le curseur : une Entrée = une étape, quelle que soit la vitesse de frappe. Posé en phase de capture sur `document`, seule position qui précède les gestionnaires des apps.
+
+**Les lettres n'entrent plus dans un champ numérique** (`pg_nombres.bundle.js`, volet 3). Taper « abc » dans une Quantité passait sans broncher, et Entrée écrivait `0` en base — sans message, sans trace. La touche est refusée à la frappe dans tout champ `Currency` / `Float` / `Percent` / `Int` ; chiffres, virgule, point et signe moins restent acceptés, les touches de contrôle et les raccourcis Ctrl/Cmd intacts.
+
+**Fichiers touchés** — `recherche_articles.py` (nouveau), `public/js/pg_tri_dropdown.bundle.js` (nouveau), `public/js/pg_grille_entree.bundle.js` (nouveau), `public/js/pg_nombres.bundle.js`, `hooks.py`
+
 ## [1.21.0] - 2026-08-20
 
 ### Repère d'environnement — le desk de DEV ne ressemble plus à la production
@@ -150,7 +168,6 @@ Uniformisé pour **toutes** les listes de **toutes** les apps : les filtres mém
 ⚠️ **Le point d'accroche est `BaseList.setup_defaults`, pas celui de `ListView`.** `this.user_settings` n'existe qu'à partir de `BaseList.setup_defaults()`, et le getter `view_user_settings` le déréférence sans garde. Une première version s'accrochait avant `ListView.setup_defaults` — donc avant son `super.setup_defaults()` — et levait `Cannot read properties of undefined (reading 'List')`, ce qui **vidait toutes les listes du desk**. On enveloppe donc `BaseList` et on supprime après l'appel original, avec un `try/catch` : ce patch est du confort d'affichage, il ne doit jamais pouvoir empêcher une liste de s'afficher.
 
 Vérifié dans Chrome sur Client, Fournisseur, Article, Bon de Livraison, Bon de Réception, Retour, Paiement BL, Devis et Écriture de Stock : filtre posé puis actualisation → filtre effacé et liste complète, aucune erreur console.
-
 
 ## [1.14.0] - 2026-08-07
 

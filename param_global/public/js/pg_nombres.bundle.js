@@ -84,6 +84,32 @@
 // calculs, qui lisent la même propriété. Et seul le formateur est touché, pas
 // `format_for_input()` : cliquer dans un prix affiche toujours ses 4 décimales
 // réelles pour l'éditer, aucune troncature silencieuse à la sortie du champ.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// VOLET 3 — SAISIE : une lettre tapée dans un champ numérique n'entre pas
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// PROBLÈME — rien n'empêchait de taper des LETTRES dans une Quantité ou un Prix.
+// Le champ affichait « abc » sans broncher, et le parsing ne rendait la main
+// qu'au change/blur : Entrée écrivait alors `0` dans le document. Zéro message,
+// zéro trace — une quantité ou un prix silencieusement annulé, sur un BL comme
+// sur un Paiement.
+//
+// CORRECTIF — la touche est refusée À LA FRAPPE, comme le point du volet 1 : rien
+// ne s'affiche, il n'y a donc plus de valeur trompeuse à corriger au blur.
+//
+// ACCEPTÉS : les chiffres, la virgule (séparateur décimal français), le point
+// (converti en virgule par le volet 1 — on le laisse donc passer jusqu'à lui) et
+// le signe moins (un montant de Paiement BL est négatif sur une sortie de caisse,
+// cf. app `caisse`). Tout le reste est refusé.
+//
+// JAMAIS TOUCHÉES : les touches de contrôle (Backspace, Tab, flèches, Entrée…,
+// reconnues à leur `key` de plus d'un caractère) et les raccourcis Ctrl/Cmd/Alt —
+// sans quoi Ctrl+A ou Ctrl+C ne fonctionneraient plus dans un champ numérique.
+//
+// Le COLLAGE reste non traité, par cohérence avec le volet 1 : une valeur collée
+// peut venir d'un tableur et porter un vrai séparateur de milliers.
+//
 
 frappe.provide("param_global.nombres");
 
@@ -94,6 +120,10 @@ param_global.nombres = {
 	// Le pavé numérique remonte « . » sur la plupart des dispositions, « Decimal »
 	// sur certaines.
 	TOUCHES_POINT: [".", "Decimal"],
+
+	// Seuls caractères qu'on laisse entrer dans un champ numérique (volet 3).
+	// Le point y figure : c'est le volet 1 qui le transforme en virgule.
+	CARACTERES_AUTORISES: /^[0-9.,-]$/,
 
 	setup() {
 		if (this._pose) return;
@@ -131,6 +161,38 @@ param_global.nombres = {
 		});
 	},
 
+	// VOLET 3 — refuse à la frappe tout caractère qui n'a rien à faire dans un
+	// nombre. Gestionnaire séparé de celui du volet 1 : celui-ci ne fait que
+	// REFUSER, l'autre RÉÉCRIT — et le point doit traverser le premier pour
+	// atteindre le second, d'où sa présence dans CARACTERES_AUTORISES.
+	setup_blocage() {
+		if (this._blocage_pose) return;
+		this._blocage_pose = true;
+		const self = this;
+
+		$(document).on("keydown.pg_blocage", "input", function (e) {
+			// Raccourcis clavier (Ctrl+A, Cmd+C, …) : ne jamais y toucher.
+			if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+			// `key` de plus d'un caractère = touche de contrôle (Backspace, Tab,
+			// ArrowLeft, Enter, Decimal…) : elles doivent toutes rester libres.
+			const touche = e.key;
+			if (!touche || touche.length !== 1) return;
+
+			// Saisie en cours de composition (clavier arabe, accents morts) : le
+			// navigateur n'a pas encore arrêté le caractère final, on le laisse finir.
+			if (e.originalEvent && e.originalEvent.isComposing) return;
+
+			const controle = ($(this).closest(".frappe-control")[0] || {}).fieldobj;
+			const type = controle && controle.df && controle.df.fieldtype;
+			if (!self.CHAMPS_NUMERIQUES.includes(type)) return;
+
+			if (self.CARACTERES_AUTORISES.test(touche)) return;
+
+			e.preventDefault();
+		});
+	},
+
 	forcer_deux_decimales() {
 		const formateurs = frappe.form && frappe.form.formatters;
 		// Pas encore chargé : l'appel au DOM ready repassera.
@@ -165,6 +227,7 @@ param_global.nombres = {
 
 	setup_tout() {
 		this.setup();
+		this.setup_blocage();
 		return this.forcer_deux_decimales();
 	},
 };
