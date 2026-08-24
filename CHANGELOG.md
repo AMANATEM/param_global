@@ -4,6 +4,25 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.24.0] - 2026-08-24
+
+### Le curseur arrive toujours, et il arrive vite
+
+Nouveau bundle `pg_focus_grille.bundle.js`. On ne programme plus un `focus()` à l'aveugle derrière un `setTimeout` : on **déclare une intention**, et un moteur la maintient jusqu'à ce qu'elle soit réellement satisfaite.
+
+- Boucle à ~16 ms au lieu d'une cascade de délais fixes (500 + 150 + 40 ms sur le trajet Client → Article).
+- `MutationObserver` sur la cible : un re-rendu **ré-arme** l'intention au lieu de l'emporter. Peu importe que le serveur réponde en 200 ms ou en 4 s.
+- Arrivée **vérifiée** : atteinte seulement si `document.activeElement` est bien la cible pendant 3 tours sans mutation. Un focus posé puis balayé n'est plus compté comme un succès.
+- **Cicatrisation automatique**, sans modification d'app : un champ de grille qui perd le curseur parce qu'un re-rendu l'a détruit le récupère. Couvre les sept grilles du bench.
+- Le geste de l'utilisateur prime : un clic ailleurs, Échap ou Tab abandonnent la reconquête.
+- L'échec n'est plus silencieux : passé l'échéance, une trace console dit ce qui était visé et ce qui a le focus à la place.
+
+`exiger_champ({frm, champ})` vise un champ ordinaire du formulaire. À l'ouverture d'un nouveau document, Frappe place son propre curseur sur le **premier champ** — « Séries », pas le tiers (`form.js`, `focus_on_first_input`) ; il s'abstient dès que le curseur est déjà dans le formulaire, donc arriver tôt sur le tiers le neutralise par son propre garde-fou. Les délais fixes d'avant laissaient au contraire Frappe gagner la course.
+
+⚠️ **`requestAnimationFrame` ne suffit pas seul** : il est gelé dans un onglet en arrière-plan (mesuré : 1 frame en 300 ms). La boucle est doublée d'un `setTimeout`, et l'échéance ne court pas pendant que l'onglet est caché — avec un **plafond de vie absolu** de 60 s, sans lequel une intention impossible à satisfaire ne se terminait jamais.
+
+**Fichiers touchés** — `public/js/pg_focus_grille.bundle.js` (nouveau), `hooks.py`
+
 ## [1.23.0] - 2026-08-24
 
 ### La liste Client / Fournisseur s'affiche toujours en « Code — Nom »

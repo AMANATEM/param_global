@@ -38,6 +38,7 @@ app_include_js = [
 	"pg_recherche_tiers.bundle.js",
 	"pg_nombres.bundle.js",
 	"pg_verrou.bundle.js",
+	"pg_focus_grille.bundle.js",
 	"pg_grille_entree.bundle.js",
 	"pg_tri_dropdown.bundle.js",
 	"pg_environnement.bundle.js",
