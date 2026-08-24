@@ -35,6 +35,7 @@ app_include_js = [
 	"pg_ui_defaults.bundle.js",
 	"pg_export_defaults.bundle.js",
 	"pg_link_search.bundle.js",
+	"pg_recherche_tiers.bundle.js",
 	"pg_nombres.bundle.js",
 	"pg_verrou.bundle.js",
 	"pg_grille_entree.bundle.js",

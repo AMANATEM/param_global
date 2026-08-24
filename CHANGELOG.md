@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.23.0] - 2026-08-24
+
+### La liste Client / Fournisseur s'affiche toujours en « Code — Nom »
+
+Le dropdown d'un champ tiers sortait tantôt en « C000001 — PARTICULIER », tantôt au format standard de Frappe « Nom, Groupe client, Région ». Environ une fois sur deux, et de façon **stable pour toute la vie du document** — pas un clignotement. Deux mécanismes s'additionnaient :
+
+1. **`get_query` est un emplacement « le dernier qui écrit gagne »** — `frm.set_query()` se réduit à `fields_dict[champ].get_query = q`. Nos affichages tiers y écrivaient leur requête, les contrôleurs ERPNext la leur. Sur le Devis, `set_dynamic_field_label` la remettait carrément à `null`.
+2. **Le cache de `link.js` figeait ensuite le perdant** — les résultats sont mémorisés dans `$input.cache[doctype][terme]`, **sans que la requête entre dans la clé**. La liste qui gagnait la toute première ouverture s'imposait jusqu'à la fermeture du document.
+
+Le correctif précédent réécrivait `get_query` dans un `setTimeout(…, 0)` puis au focus : il tentait de **gagner la course en écrivant plus tard**. Une course ne se gagne pas, elle se supprime. `pg_recherche_tiers.bundle.js` impose donc la requête dans `ControlLink.set_custom_query`, dernier point de passage avant l'appel serveur, une fois `get_query` déjà consulté. Vérifié en détruisant `get_query` de quatre façons (écrasé, mis à `null`, supprimé) : la requête part inchangée.
+
+⚠️ **Ne jamais vider le cache depuis `set_custom_query`.** `link.js` crée `cache[doctype]` juste avant d'appeler cette méthode et son callback y écrit au retour du serveur ; remplacer `$input.cache` y fait lever un `TypeError` **avant** la ligne qui alimente `awesomplete.list` — plus aucune liste ne s'affiche, sur tous les champs tiers à la fois. Essayé, panne immédiate, correctif retiré le jour même. Le forçage de requête se suffit à lui-même.
+
+**Fichiers touchés** — `public/js/pg_recherche_tiers.bundle.js` (nouveau), `hooks.py`
+
 ## [1.22.0] - 2026-08-22
 
 ### Le tri des listes de recherche d'articles, la file des Entrée, et les lettres refusées dans les champs numériques
