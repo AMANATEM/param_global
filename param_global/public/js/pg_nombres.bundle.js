@@ -48,6 +48,16 @@
 // Le collage n'est pas traité (seule la frappe l'est) : une valeur collée peut
 // contenir un vrai séparateur de milliers, on ne veut pas avoir à le deviner.
 //
+// CHAMPS HORS FORMULAIRE — les deux volets de saisie reconnaissent un champ à son
+// `fieldtype`, lu sur le contrôle Frappe qui l'enveloppe. Un `<input>` écrit à la
+// main dans un dialogue n'a pas de `.frappe-control` autour de lui : il n'a donc
+// AUCUN fieldtype, et passait au travers — pavé numérique inutilisable, lettres
+// acceptées. Une app peut désormais l'y faire entrer en posant la classe
+// `pg-numerique` sur son input (cf. le tableau « Prix de vente » de
+// `bon_reception`). ⚠️ Un tel champ doit être en `type="text"` : un
+// `type="number"` REFUSE la virgule, `.value` revient vide — les deux volets
+// n'auraient alors rien à écrire.
+//
 // ─────────────────────────────────────────────────────────────────────────────
 // VOLET 2 — AFFICHAGE : toujours deux décimales
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,6 +135,21 @@ param_global.nombres = {
 	// Le point y figure : c'est le volet 1 qui le transforme en virgule.
 	CARACTERES_AUTORISES: /^[0-9.,-]$/,
 
+	// Classe d'adhésion pour les <input> hors formulaire (dialogues écrits à la
+	// main), qui n'ont pas de contrôle Frappe d'où tirer un fieldtype.
+	CLASSE_BRUTE: "pg-numerique",
+
+	// Un champ compte comme numérique s'il est déclaré tel par Frappe, ou s'il
+	// porte la classe d'adhésion. Le test est mutualisé par les volets 1 et 3 :
+	// les deux doivent viser exactement le même ensemble de champs, sinon on
+	// bloquerait des caractères là où on ne convertit pas le point, ou l'inverse.
+	est_numerique(input) {
+		if (input.classList && input.classList.contains(this.CLASSE_BRUTE)) return true;
+		const controle = ($(input).closest(".frappe-control")[0] || {}).fieldobj;
+		const type = controle && controle.df && controle.df.fieldtype;
+		return this.CHAMPS_NUMERIQUES.includes(type);
+	},
+
 	setup() {
 		if (this._pose) return;
 		this._pose = true;
@@ -135,9 +160,7 @@ param_global.nombres = {
 			// Raccourcis clavier (Ctrl+., etc.) : laisser passer.
 			if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-			const controle = ($(this).closest(".frappe-control")[0] || {}).fieldobj;
-			const type = controle && controle.df && controle.df.fieldtype;
-			if (!self.CHAMPS_NUMERIQUES.includes(type)) return;
+			if (!self.est_numerique(this)) return;
 
 			e.preventDefault();
 
@@ -183,9 +206,7 @@ param_global.nombres = {
 			// navigateur n'a pas encore arrêté le caractère final, on le laisse finir.
 			if (e.originalEvent && e.originalEvent.isComposing) return;
 
-			const controle = ($(this).closest(".frappe-control")[0] || {}).fieldobj;
-			const type = controle && controle.df && controle.df.fieldtype;
-			if (!self.CHAMPS_NUMERIQUES.includes(type)) return;
+			if (!self.est_numerique(this)) return;
 
 			if (self.CARACTERES_AUTORISES.test(touche)) return;
 

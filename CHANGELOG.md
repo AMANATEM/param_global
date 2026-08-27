@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.25.0] - 2026-08-27
+
+### Les nombres au format français jusque dans les dialogues écrits à la main
+
+`pg_nombres` reconnaissait un champ numérique à son `fieldtype`, lu sur le contrôle Frappe qui l'enveloppe. Un `<input>` posé à la main dans un dialogue n'en a pas : il passait au travers des deux volets de saisie, **en silence** — pavé numérique inutilisable, lettres acceptées sans broncher.
+
+- Nouvelle classe d'adhésion **`pg-numerique`** : une app la pose sur son input brut, et le champ entre dans le volet 1 (point → virgule) et le volet 3 (refus des lettres).
+- Le test est extrait dans `est_numerique()`, **appelé par les deux volets**. Ils doivent viser exactement le même ensemble de champs : viser large d'un côté et étroit de l'autre bloquerait des caractères là où le point n'est pas converti, ou l'inverse.
+
+⚠️ **Un champ marqué doit être en `type="text"`.** Un `type="number"` REFUSE la virgule — `.value` revient vide — donc les deux volets n'auraient rien où écrire. On y perd les flèches ▲▼ et l'attribut `min`, à reprendre côté app.
+
+Premier utilisateur : le tableau « Prix de vente » de `bon_reception` 0.36.0.
+
+**Fichiers touchés** — `public/js/pg_nombres.bundle.js`
+
 ## [1.24.0] - 2026-08-24
 
 ### Le curseur arrive toujours, et il arrive vite
