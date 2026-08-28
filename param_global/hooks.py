@@ -119,16 +119,34 @@ doc_events = {
 		"before_insert": "param_global.tiers.before_insert_supplier",
 	},
 	"Purchase Receipt": {
-		"on_submit": "param_global.stock_sync.on_stock_document",
-		"on_cancel": "param_global.stock_sync.on_stock_document",
+		"on_submit": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_submit",
+		],
+		"on_cancel": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_cancel",
+		],
 	},
 	"Delivery Note": {
-		"on_submit": "param_global.stock_sync.on_stock_document",
-		"on_cancel": "param_global.stock_sync.on_stock_document",
+		"on_submit": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_submit",
+		],
+		"on_cancel": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_cancel",
+		],
 	},
 	"Stock Entry": {
-		"on_submit": "param_global.stock_sync.on_stock_document",
-		"on_cancel": "param_global.stock_sync.on_stock_document",
+		"on_submit": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_submit",
+		],
+		"on_cancel": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_cancel",
+		],
 	},
 	"Purchase Invoice": {
 		"on_submit": "param_global.stock_sync.on_stock_document",
@@ -139,12 +157,58 @@ doc_events = {
 		"on_cancel": "param_global.stock_sync.on_stock_document",
 	},
 	"Stock Reconciliation": {
-		"on_submit": "param_global.stock_sync.on_stock_document",
-		"on_cancel": "param_global.stock_sync.on_stock_document",
+		"on_submit": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_submit",
+		],
+		"on_cancel": [
+			"param_global.stock_sync.on_stock_document",
+			"param_global.validation.on_cancel",
+		],
 	},
 	"Item Price": {
 		"on_save": "param_global.stock_sync.on_item_price_change",
 		"on_trash": "param_global.stock_sync.on_item_price_change",
+	},
+	# ── « Validé le » : horodatage de la validation (param_global/validation.py) ──
+	# Les quatre autres doctypes soumissionnables (Delivery Note, Purchase
+	# Receipt, Stock Entry, Stock Reconciliation) sont déjà déclarés plus haut,
+	# où les deux méthodes cohabitent avec stock_sync.
+	"Retour": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Paiement BL": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Paiement BR": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Quotation": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Purchase Order": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Remise Bancaire": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Mouvement Caisse": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Verification": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
+	"Ajustement Commission": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
 	},
 }
 

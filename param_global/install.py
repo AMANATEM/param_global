@@ -2,6 +2,7 @@ import frappe
 
 from param_global.grilles import appliquer_grilles_utilisateurs
 from param_global.sons import appliquer_son_muet
+from param_global.validation import creer_champs as creer_champs_validation
 
 
 def after_install():
@@ -147,6 +148,10 @@ def apply_global_params():
     create_last_purchase_ttc_field()
     sync_last_purchase_ttc_all()
     create_tiers_fields()
+
+    # Champ « Validé le » sur les treize doctypes soumissionnables — cf.
+    # validation.py pour le pourquoi d'un champ dédié plutôt que posting_time.
+    creer_champs_validation()
 
     # Présentation identique des grilles (tables enfants des formulaires) pour tous
     # les utilisateurs du desk — cf. grilles.py pour le pourquoi du GridView.

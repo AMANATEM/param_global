@@ -4,6 +4,34 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.26.0] - 2026-08-28
+
+### « Validé le » — la date et l'heure de validation, sur les treize documents
+
+Nouveau module `validation.py` : un champ `date_validation` (Datetime, « Validé le ») posé sur **les treize doctypes soumissionnables du bench**, horodaté en `on_submit` et vidé en `on_cancel`.
+
+Le besoin de départ était de savoir *quand* un document a été validé. La première piste — faire porter cette information à `posting_time` — a été écartée : ce champ est la date de **comptabilisation**, il pilote le Stock Ledger et la valorisation, et il est éditable. Un document peut être saisi un jour et validé un autre ; mêler les deux aurait fait porter un risque comptable à un besoin d'affichage.
+
+Le champ vit dans `param_global` et non dans chacune des neuf apps concernées : il ne relève d'aucun domaine, et une définition unique évite que deux apps se la réécrivent à chaque migration.
+
+**Le champ ne s'affiche qu'une fois le document validé** (`depends_on: eval:doc.date_validation`) : vide sur un brouillon, il reste invisible. Il n'est **pas** une colonne de liste par défaut (`in_list_view: 0`), mais reste proposé dans « Ajouter une colonne » le jour où on en a besoin. Il n'est pas imprimé.
+
+⚠️ **Rien n'est rétro-rempli, volontairement.** `tabVersion` garde pourtant la trace du passage `docstatus 0 → 1` pour 99,7 % des BL — mais **94 % de ces traces datent des fenêtres d'import Omag** (09/07 → 06/08/2026) : ce sont des heures d'IMPORT, pas de validation. Un champ vide sur l'historique dit la vérité : ces documents n'ont jamais été validés dans ERPNext, ils y sont entrés déjà validés.
+
+⚠️ **`param_global` devient propriétaire du champ**, que `bon_es` portait déjà pour les seuls Bons E/S sous le même nom. Sans cette reprise, les deux apps se seraient réécrit sa définition à chaque `bench migrate`, selon l'ordre des hooks — le piège déjà connu sur les grilles. Nécessite `bon_es` 0.2.0, qui cesse de le définir et de le remplir.
+
+⚠️ **`update_modified=False` à l'écriture** : `modified` est le tri par défaut des listes Frappe, le remuer ferait remonter en tête tout document validé.
+
+### Placement du champ, et suppression de la mention de fuseau
+
+`ANCRAGES_SPECIFIQUES` fixe la position au cas par cas — sous « Client » sur le Bon de Livraison, en 2ᵉ colonne sur le Devis et le Bon de Commande. Partout ailleurs le champ suit « Créé par », les deux informations se lisant ensemble.
+
+⚠️ **C'est le seul endroit où se décide `insert_after`.** Une app qui le réécrirait dans son propre `after_migrate` entrerait en bagarre avec celui-ci à chaque migration, le dernier hook exécuté l'emportant.
+
+La mention « Africa/Casablanca » qu'affichait le champ disparaît. Elle n'est pas du texte en dur : le contrôle Datetime de Frappe injecte le fuseau du site en **description** du champ, sauf si `hide_timezone` est vrai.
+
+⚠️ `hide_timezone` **n'existe pas comme colonne de « Custom Field »** — le mettre dans la définition du champ serait ignoré en silence. Il passe par un Property Setter : `Meta.apply_property_setters()` pose la propriété sur le docfield même quand elle ne fait pas partie du schéma.
+
 ## [1.25.0] - 2026-08-27
 
 ### Les nombres au format français jusque dans les dialogues écrits à la main
