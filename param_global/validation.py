@@ -48,9 +48,7 @@ DOCTYPES = (
 
 # Points d'ancrage possibles, du plus souhaitable au plus neutre. `cree_par` met
 # « Validé le » juste à côté de « Créé par », les deux informations se lisant
-# ensemble ; `amended_from` est le repli. Aucun des deux n'existe sur
-# `Paiement BL` : le champ y part alors en fin de formulaire, ce qui reste sans
-# conséquence pour un champ en lecture seule masqué tant qu'il est vide.
+# ensemble ; `amended_from` est le repli.
 ANCRAGES = ("cree_par", "amended_from")
 
 # Placement voulu au cas par cas, quand le repère par défaut ne convient pas.
@@ -63,6 +61,9 @@ ANCRAGES_SPECIFIQUES = {
 	# (Créé par) est déjà la plus chargée du formulaire, et la gauche n'a que
 	# le client — « Validé le » y comble un vide au lieu d'allonger une pile.
 	"Delivery Note": "customer",
+	# Paiement BL : avec les informations temporelles du document. Le champ reste
+	# invisible sur un brouillon et ne s'affiche ici qu'après validation.
+	"Paiement BL": "heure",
 	# Devis et Bon de Commande : 2e colonne, sous la Date — « Créé par » ayant été
 	# déplacé en 3e colonne, l'ancrage par défaut (`cree_par`) l'y aurait entraîné.
 	"Quotation": "transaction_date",

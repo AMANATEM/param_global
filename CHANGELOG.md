@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.26.1] - 2026-09-01
+
+### Placement de « Validé le » sur Paiement BL
+
+Le champ « Validé le » suit désormais l'heure dans le formulaire Paiement BL.
+Il reste invisible sur les brouillons et absent de la liste par défaut, tout en
+restant disponible comme colonne à afficher ultérieurement.
+
 ## [1.26.0] - 2026-08-28
 
 ### « Validé le » — la date et l'heure de validation, sur les treize documents
