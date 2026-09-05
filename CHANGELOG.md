@@ -4,6 +4,53 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.27.0] - 2026-09-05
+
+### Le verrou chronologique déménage ici, et couvre les neuf documents
+
+`controle_date.py` vivait dans `bon_livraison`, où il ne servait que les trois
+documents de la vente. La direction a décidé d'appliquer la même règle aux six
+documents restants — Bon de Réception, Bon E/S, Paiement fournisseur, Écriture de
+Stock, Réconciliation de Stock, Remise Bancaire. L'y laisser aurait obligé quatre
+apps à dépendre de `bon_livraison`, ce que l'architecture du bench interdit : le
+module est donc transverse, comme `verrou.py` et `validation.py`.
+
+Un employé ne peut donc plus annuler un Bon de Réception de 2022 ni une Écriture de
+Stock de juin — gestes qui étaient jusqu'ici parfaitement ouverts, alors qu'ils
+déplacent du stock et des soldes fournisseurs rétroactivement.
+
+Le volet client devient un bundle desk-wide, `pg_controle_date.bundle.js`, qui
+branche lui-même les six nouveaux documents. Les trois documents de vente
+continuent d'appeler le helper depuis leur propre formulaire — les y ajouter
+afficherait la confirmation deux fois.
+
+⚠️ Les libellés arabes des six documents ajoutés ont été écrits sur le modèle des
+trois premiers (« سند » + complément) et méritent une relecture par un lecteur
+arabophone : c'est le texte que voit quelqu'un à qui l'on refuse un geste.
+
+⚠️ Le Bon de Réception fait exception à la **validation** : le bon d'un fournisseur
+remonte parfois avec quelques jours de retard, la validation antidatée y est donc
+libre. Son annulation reste verrouillée.
+
+### Fin des filtres dupliqués dans les listes
+
+`pg_init_doctype.bundle.js` : un doctype n'est plus initialisé qu'une fois par
+session.
+
+`frappe.model.init_doctype()` ré-exécute le fichier `*_list.js` de l'app
+propriétaire (`new Function(meta.__list_js)()`), et `with_doctype()` ne
+court-circuite que si la meta est **déjà** arrivée : deux appels lancés avant la
+première réponse partaient tous les deux. Comme nos quinze fichiers de liste
+s'enchaînent sur leur propre `settings.onload`, la liste s'ouvrait ensuite avec ses
+filtres Période / Date / Mode en double, voire en triple.
+
+On ne corrige pas les quinze fichiers un par un : on rend vraie l'hypothèse qu'ils
+font tous, à savoir être évalués une seule fois. Les listes écrites plus tard en
+héritent.
+
+⚠️ Contrepartie assumée : modifier un doctype en cours de session ne recharge plus
+le JS de sa liste avant le prochain rafraîchissement de la page.
+
 ## [1.26.1] - 2026-09-01
 
 ### Placement de « Validé le » sur Paiement BL
