@@ -4,6 +4,19 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.27.1] - 2026-09-06
+
+### « Validé le » retrouve son ancrage par défaut sur les deux paiements
+
+`Paiement BL` était ancré sur « Heure » et `Paiement BR` sur son défaut, faute de
+champ `cree_par` sur ces deux doctypes. Ils en ont reçu un le 2026-09-06 — qui
+est justement l'ancrage par défaut de ce module. L'exception est donc retirée :
+la garder ferait se disputer la même place à deux champs, l'ordre dépendant alors
+de celui des hooks.
+
+Ordre obtenu : `date · heure · cree_par · date_validation` sur le Paiement BL,
+`date · cree_par · date_validation` sur le Paiement BR.
+
 ## [1.27.0] - 2026-09-05
 
 ### Le verrou chronologique déménage ici, et couvre les neuf documents

@@ -61,9 +61,10 @@ ANCRAGES_SPECIFIQUES = {
 	# (Créé par) est déjà la plus chargée du formulaire, et la gauche n'a que
 	# le client — « Validé le » y comble un vide au lieu d'allonger une pile.
 	"Delivery Note": "customer",
-	# Paiement BL : avec les informations temporelles du document. Le champ reste
-	# invisible sur un brouillon et ne s'affiche ici qu'après validation.
-	"Paiement BL": "heure",
+	# Paiement BL et Paiement BR n'ont PLUS d'exception depuis le 2026-09-06 :
+	# ils ont reçu un champ `cree_par`, qui est justement l'ancrage par défaut.
+	# Les y laisser ancrés sur « Heure » ferait se disputer la même place à deux
+	# champs, l'ordre dépendant alors de celui des hooks.
 	# Devis et Bon de Commande : 2e colonne, sous la Date — « Créé par » ayant été
 	# déplacé en 3e colonne, l'ancrage par défaut (`cree_par`) l'y aurait entraîné.
 	"Quotation": "transaction_date",
