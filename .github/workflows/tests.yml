@@ -103,7 +103,14 @@ jobs:
           cd ~/frappe-bench
           mv "$GITHUB_WORKSPACE/app_source" "apps/$APP"
           bench pip install -e "apps/$APP"
-          grep -qx "$APP" sites/apps.txt || echo "$APP" >> sites/apps.txt
+          # ⚠️ `sites/apps.txt` ne se termine PAS par un saut de ligne (vérifié :
+          # dernier octet 0x74, pas 0x0a). Un `echo >>` nu colle donc le nom sur la
+          # ligne précédente — Frappe cherche ensuite un module « bon_esparam_global »
+          # et `bench new-site` meurt sur un ModuleNotFoundError sans rapport apparent.
+          if ! grep -qx "$APP" sites/apps.txt; then
+            [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt
+            echo "$APP" >> sites/apps.txt
+          fi
 
       - name: Créer le site de test
         run: |
