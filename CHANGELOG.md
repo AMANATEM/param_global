@@ -4,6 +4,45 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.29.0] - 2026-09-06
+
+### Le moteur de tests de cycle de vie
+
+Nouveau module **`param_global/tests/base.py`** : `CycleDeVieTestCase`, qui déroule
+le parcours réel d'un document soumissionnable — créer, enregistrer, valider,
+annuler, « Nouv. version », enregistrer — pour n'importe quel doctype du bench.
+
+Écrit **une seule fois** ici plutôt que recopié dans chaque app, pour la même
+raison que `pg_loupes` et `controle_date` : une vérification ajoutée au moteur
+profite aux treize doctypes, ajoutée dans une copie elle ne profite à personne.
+Contrepartie assumée — une modification de ce fichier peut casser les tests des
+autres apps, et leur CI ne le verra qu'à leur prochain push.
+
+Le moteur vérifie à chaque cycle que `param_global` pose puis vide bien
+`date_validation`, et contrôle les deux conditions du standard « DocTypes
+soumissionnables » : présence du champ `amended_from`, et au moins un rôle avec la
+permission `amend`. ⚠️ Ce second point est contrôlé sur les **métadonnées** et non
+en cliquant, parce que les tests tournent sous `Administrator` — qui court-circuite
+`has_permission()`. Un `amend: 1` manquant laisserait donc passer le cycle tout en
+privant les vrais utilisateurs du bouton, exactement le défaut qu'avait
+`Paiement BL` jusqu'en 0.51.1.
+
+Ajoute aussi les décors partagés `creer_client_test()` et `creer_fournisseur_test()`
+— Customer et Supplier sont des doctypes ERPNext, mais leur `code_tiers` est posé
+par `param_global.tiers`, c'est donc bien cette app qui sait les fabriquer.
+
+⚠️ **`frappe.copy_doc()` n'efface PAS `docstatus` en mode test**
+(`if not local.flags.in_test: fields_to_clear.append("docstatus")`). La copie d'un
+document annulé arrive donc avec `docstatus = 2` et `insert()` la refuse. Le moteur
+reproduit le vrai geste du desk (`Form.amend_doc` → `newdoc.docstatus = 0`).
+
+⚠️ **`base.py` ne commence pas par `test_`** : il n'est donc jamais collecté par le
+lanceur, et `run-tests --app param_global` renvoie « Ran 0 tests ». C'est voulu —
+le moteur est exercé par les apps qui l'utilisent. Les tests propres à cette app
+(fonctions pures : arrondis, bornes de dates, verrou chronologique) restent à écrire.
+
+---
+
 ## [1.28.0] - 2026-09-06
 
 ### Le moteur de loupes de colonne, mutualisé pour tout le bench
