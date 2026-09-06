@@ -44,6 +44,7 @@ app_include_js = [
 	"pg_environnement.bundle.js",
 	"pg_init_doctype.bundle.js",
 	"pg_controle_date.bundle.js",
+	"pg_loupes.bundle.js",
 ]
 
 # include js, css files in header of web template

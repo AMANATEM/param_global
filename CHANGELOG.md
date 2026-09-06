@@ -4,6 +4,97 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.28.0] - 2026-09-06
+
+### Le moteur de loupes de colonne, mutualisé pour tout le bench
+
+Nouveau bundle desk-wide **`pg_loupes.bundle.js`** (13ᵉ entrée d'`app_include_js`).
+Le moteur de recherche par colonne existait en **17 exemplaires** recopiés d'app en
+app ; les copies avaient divergé — quatre étaient restées à une version des débuts —
+et c'est ce mécanisme qui avait produit la faute de frappe `"hafssa"` restée dans
+une seule d'entre elles. Bilan : **11 640 → 4 726 lignes** dans les 17 fichiers,
+pour un moteur de 712 lignes, soit **6 202 lignes nettes en moins**.
+
+L'app déclare ses colonnes, le moteur fait le reste :
+
+```js
+const loupes = frappe.loupes.installer("Delivery Note", {
+    text: [...], number: [...], date: [...], status: ["status"],
+    order_by: "...", mise_en_page: { meta_droite: 150, subject_flex: 3.5 },
+});
+```
+
+Il expose `listview.pg_loupes.effacer()` et `.rafraichir()` : la règle du *quand*
+effacer reste à l'app, chacune ayant la sienne.
+
+### La loupe est AUTOMATIQUE
+
+Toute colonne affichée en reçoit une, sans déclaration : c'est le `fieldtype` qui
+décide (`Currency`/`Float`/`Int`/`Percent` → nombre, `Date` → date, `Check` →
+oui/non, `Data`/`Link`/`Select`/`Text` → texte). Une déclaration explicite prime,
+et porte les cas particuliers. `auto: false` et `exclure: [...]` permettent de s'en
+retirer.
+
+⚠️ `Datetime` et `Time` sont **hors** de l'inférence : notre analyse de date produit
+un `= "2026-12-20"`, qui sur un Datetime ne trouve que les documents posés à minuit
+pile — un filtre qui paraît marcher et ment.
+
+⚠️ Les champs virtuels et les types sans valeur en base (HTML, Image, Bouton, Table)
+sont écartés : aucun filtre SQL ne peut porter dessus.
+
+⚠️ La colonne Statut n'est inférée que sur un doctype **soumissionnable**, dont le
+barème `docstatus` a un sens. Ailleurs l'indicateur est maison et l'app doit
+déclarer `config.statut`.
+
+### Un nombre seul est un PRÉFIXE, plus un intervalle
+
+« 29 » ramène 29, mais aussi 290, 293,70 et 2 988 — c'est ainsi qu'on cherche un
+montant dont on ne se rappelle que le début. Techniquement un `LIKE '29%'` :
+MariaDB convertit le DECIMAL(21,9) en chaîne, la partie entière est donc en tête.
+Les opérateurs et les intervalles ne changent pas (`>1000`, `<500`, `100-500`).
+
+⚠️ Contrepartie assumée : un `LIKE` n'utilise pas l'index de la colonne. Sans
+conséquence à l'échelle de nos listes, qui ramènent 20 lignes à la fois.
+
+### Trois états visuels, et ils ne peuvent plus mentir
+
+Champ vide → cadre **gris** ; saisie valide → cadre **vert émeraude**, fond teinté,
+valeur en gras — le seul repère qui dise d'un coup d'œil sur quelles colonnes porte
+la recherche ; saisie fausse → cadre **rouge**.
+
+⚠️ **RÈGLE ABSOLUE : une saisie que la liste ne sait pas honorer donne ZÉRO
+résultat, jamais la liste entière.** Le moteur pousse la sentinelle
+`["name", "in", ["__aucun__"]]`. Taper « annule » sur la colonne Statut de
+l'Article — dont le barème est Activé/Désactivé — laissait auparavant un cadre vert
+et n'envoyait **aucun** filtre : les 1 000+ articles s'affichaient comme si la liste
+était filtrée.
+
+⚠️ Quand la liste est vide et que l'en-tête est conservé (pour que les loupes
+restent atteignables), la zone de résultats reçoit la classe `pg-vide`, qui annule
+le `min-height` plein écran de Frappe. Sans elle le message « aucun résultat »
+partait ~900 px plus bas, hors de l'écran.
+
+⚠️ **Aucune transition CSS** sur ces trois états, et `transition: none !important` —
+une règle de Frappe pose `transition: all`, or Chrome fige les animations d'un
+onglet en arrière-plan : le cadre restait bloqué à mi-course, rouge alors que la
+saisie était redevenue valide.
+
+### Le moteur style la loupe, jamais la mise en page
+
+Les anciens blocs CSS mêlaient les deux, et chaque liste avait sa propre
+répartition : huit à `subject_flex 3.5`, cinq sans aucune règle, l'Article et le
+Paiement BL en largeurs fixes avec défilement horizontal. Chaque liste déclare donc
+la sienne via `config.mise_en_page`, et **rien n'est émis quand elle se tait**.
+
+### Autres
+
+- un champ laissé **vide se referme au blur**, un champ qui porte du texte reste
+  ouvert ;
+- les statuts « valide » / « annule » **sans accent** fonctionnent partout (2 listes
+  sur 17 auparavant) ;
+- l'en-tête d'origine est nettoyé de ses icônes avant d'être mémorisé, sinon une
+  colonne pouvait se retrouver avec deux loupes.
+
 ## [1.27.1] - 2026-09-06
 
 ### « Validé le » retrouve son ancrage par défaut sur les deux paiements
