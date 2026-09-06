@@ -1,0 +1,150 @@
+# Tests automatiques — AMANATEM
+#
+# ⚠️ FICHIER GÉNÉRÉ. Identique dans les 21 dépôts, à la ligne `APP:` près.
+# Ne PAS le modifier ici : modifier le gabarit
+# `apps/param_global/scripts/ci_tests.yml`, puis relancer
+# `python3 apps/param_global/scripts/generer_ci.py`.
+# Le corriger dans un seul dépôt le ferait diverger des vingt autres — c'est le
+# mécanisme qui a produit dix-sept copies de `pg_loupes`.
+#
+# ⚠️ PRÉREQUIS MANUEL : chaque dépôt doit porter un secret `AMANATEM_TOKEN`
+# (PAT classic, scope `repo`) pour cloner les autres apps privées de l'org.
+# Sans lui, le job s'arrête au premier `bench get-app`.
+
+name: Tests
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  APP: param_global
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:alpine
+        ports: ["6379:6379"]
+
+    steps:
+      - name: Récupérer le code de cette app
+        uses: actions/checkout@v4
+        with:
+          path: app_source
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Paquets système
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends mariadb-client
+          sudo npm install -g yarn
+
+      # ⚠️ Frappe exige utf8mb4 : sans ces réglages, `bench new-site` échoue sur
+      # des index trop longs.
+      - name: Configurer MariaDB
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "
+            SET GLOBAL character_set_server = 'utf8mb4';
+            SET GLOBAL collation_server = 'utf8mb4_unicode_ci';"
+
+      - name: Installer bench
+        run: pip install frappe-bench
+
+      - name: Initialiser le bench
+        run: |
+          bench init --skip-redis-config-generation --frappe-branch version-15 \
+            --python "$(which python)" ~/frappe-bench
+          cd ~/frappe-bench
+          bench set-config -g redis_cache "redis://127.0.0.1:6379"
+          bench set-config -g redis_queue "redis://127.0.0.1:6379"
+          bench set-config -g redis_socketio "redis://127.0.0.1:6379"
+          bench set-config -g developer_mode 1
+
+      - name: Récupérer erpnext et les autres apps AMANATEM
+        env:
+          TOKEN: ${{ secrets.AMANATEM_TOKEN }}
+        run: |
+          cd ~/frappe-bench
+          bench get-app --branch version-15 erpnext
+          for a in param_global profils client fournisseur article bon_livraison \
+                   caisse remise_bancaire bon_reception bon_es ecriture_stock \
+                   reconciliation_stock devis bon_commande garage verification \
+                   rapport accueil commission professionnels article_manquant; do
+            # L'app testée vient du checkout, pas du dépôt distant : c'est le code
+            # de CE push qu'on veut éprouver, pas celui déjà poussé.
+            [ "$a" = "$APP" ] && continue
+            bench get-app --branch develop \
+              "https://x-access-token:${TOKEN}@github.com/AMANATEM/${a}.git"
+          done
+
+      - name: Greffer l'app testée
+        run: |
+          cd ~/frappe-bench
+          mv "$GITHUB_WORKSPACE/app_source" "apps/$APP"
+          bench pip install -e "apps/$APP"
+          grep -qx "$APP" sites/apps.txt || echo "$APP" >> sites/apps.txt
+
+      - name: Créer le site de test
+        run: |
+          cd ~/frappe-bench
+          bench new-site test.local \
+            --admin-password Admin1234. \
+            --mariadb-root-password root \
+            --mariadb-user-host-login-scope='%' \
+            --db-host 127.0.0.1
+          # ⚠️ `allow_tests` : sans cette clé, `run-tests` refuse de démarrer.
+          #    C'est aussi le garde-fou qui protège amanatem.local — ne jamais l'y poser.
+          # ⚠️ `admin_password` : c'est là que `FrappeTestCase.ADMIN_PASSWORD` le lit,
+          #    et les tests du verrou administrateur en dépendent.
+          bench --site test.local set-config allow_tests true
+          bench --site test.local set-config admin_password Admin1234.
+          bench --site test.local install-app erpnext
+
+      # ⚠️ ÉTAPE INDISPENSABLE : la société doit être AMANATEM / AMA. Voir
+      # l'en-tête de ci_setup_wizard.py — `garage/sync.py` compare littéralement
+      # à « GARAGE - AMA ».
+      - name: Assistant de configuration (AMANATEM / AMA)
+        run: |
+          cd ~/frappe-bench
+          bench --site test.local console < apps/param_global/scripts/ci_setup_wizard.py
+
+      - name: Installer les apps
+        run: |
+          cd ~/frappe-bench
+          for a in param_global profils client fournisseur article bon_livraison \
+                   caisse remise_bancaire bon_reception bon_es ecriture_stock \
+                   reconciliation_stock devis bon_commande garage verification \
+                   rapport accueil commission professionnels article_manquant; do
+            bench --site test.local install-app "$a"
+          done
+          # ⚠️ OBLIGATOIRE. `param_global` pose ses Custom Fields (dont
+          # `date_validation`) à SON installation : les doctypes des apps installées
+          # après lui n'existaient pas encore. Sans ce migrate, la moitié des tests
+          # de cycle échoue sur « Unknown column 'date_validation' ».
+          bench --site test.local migrate
+
+      - name: Lancer les tests
+        run: |
+          cd ~/frappe-bench
+          bench --site test.local run-tests --app "$APP"

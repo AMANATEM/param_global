@@ -4,6 +4,44 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.31.0] - 2026-09-06
+
+### La CI, et le gabarit qui la génère
+
+Nouveau dossier `scripts/` :
+
+- **`ci_tests.yml`** — le gabarit unique du workflow, déployé dans les 21 dépôts.
+- **`generer_ci.py`** — l'écrit dans chaque dépôt, en n'y changeant que la ligne `APP:`.
+- **`ci_setup_wizard.py`** — l'assistant de configuration du site de test, partagé
+  entre la CI et la mise en place manuelle.
+
+⚠️ **La société DOIT être AMANATEM / abrégé AMA.** Laissé à lui-même, le hook
+`before_tests` d'erpnext crée « Wind Power LLC » d'abrégé « WP » — or
+`garage/sync.py` compare LITTÉRALEMENT à « GARAGE - AMA ». Les entrepôts
+s'appelleraient « GARAGE - WP » et toute la détection GARAGE deviendrait
+intestable. C'est la raison d'être de `ci_setup_wizard.py`.
+
+### CI GitHub Actions
+
+`.github/workflows/tests.yml` — les tests de l'app tournent désormais à chaque
+push et chaque pull request sur `develop`.
+
+⚠️ **PRÉREQUIS MANUEL, une fois par dépôt** : poser le secret `AMANATEM_TOKEN`
+(PAT classic, scope `repo`) dans *Settings → Secrets and variables → Actions*.
+Sans lui, le job s'arrête au premier `bench get-app` — les autres apps de l'org
+sont privées.
+
+⚠️ Le workflow est **généré** depuis `param_global/scripts/ci_tests.yml` et
+identique dans les 21 dépôts. Ne pas le modifier ici : modifier le gabarit puis
+relancer `python3 apps/param_global/scripts/generer_ci.py`. Le corriger dans un
+seul dépôt le ferait diverger des vingt autres — le mécanisme qui a produit dix-
+sept copies de `pg_loupes`.
+
+Le job installe **les 21 apps**, pas seulement celle testée : les tests traversent
+les frontières d'apps, un sous-ensemble serait faux.
+
+---
+
 ## [1.30.0] - 2026-09-06
 
 ### Le décor de tests complet, et deux garde-fous élargis à l'assistant de configuration
