@@ -4,6 +4,58 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.30.0] - 2026-09-06
+
+### Le décor de tests complet, et deux garde-fous élargis à l'assistant de configuration
+
+**Tests.** Le moteur `CycleDeVieTestCase` reçoit les décors partagés du bench :
+`creer_client_test` / `creer_fournisseur_test` (avec `mobile_no`, exigé par l'app
+`client` à la création), `creer_article_test`, `creer_entrepot_test`, `poser_stock`
+et `vider_table`. S'ajoutent **24 tests propres à cette app** : le verrou
+chronologique (`test_controle_date.py`) et le verrou administrateur
+(`test_verrou.py`), plus l'outil `tests/utils.py`.
+
+⚠️ **`utilisateur_reel()` baisse `frappe.flags.in_test` ET quitte `Administrator`
+en même temps.** La moitié des garde-fous du bench sortent d'office sous `in_test`
+— c'est la parade qui empêche un `bench migrate` d'échouer — et `Administrator`
+passe partout. Sans les DEUX, ces tests s'exécutent et ne prouvent rien.
+
+⚠️ **`frappe.copy_doc()` prend `ignore_no_copy=False`.** Son défaut est `True` : il
+CONSERVE les champs `no_copy`, ce que le bouton « Nouv. version » ne fait jamais.
+Sur un `Retour`, `delivery_note` était recopié et pointait vers un document annulé
+— l'insertion échouait sur « Cannot link cancelled document ».
+
+⚠️ **`vider_table()` existe parce que le rollback NE TIENT PAS partout** :
+`bon_livraison/delivery_note.py` et `remise_bancaire/paiement_bl.py` appellent
+`frappe.db.commit()`, ce qui valide la transaction entière. 21 `Pointage Garage`
+résiduels faisaient répondre « NON OK » à `statut_garage()` quoi qu'on fasse.
+
+**Les entrepôts de test portent les noms RÉELS de la production** (`GARAGE - AMA`,
+`PRINCIPAL - AMA`, `DEPOT - AMA`) : `garage/sync.py` les compare littéralement, un
+nom de test rendrait la détection GARAGE intestable.
+
+### `in_setup_wizard` ajouté à `controle_date._traitement_systeme()`
+
+L'assistant de configuration ERPNext crée lui aussi des documents sous
+`Administrator`, hors de toute interaction humaine. Le drapeau existe
+(`frappe/desk/page/setup_wizard/setup_wizard.py`) mais n'était pas testé.
+
+### L'UOM « Unité » est créée si elle manque
+
+`apply_global_params()` désignait « Unité » comme unité par défaut **sans garantir
+son existence**. Sur `amanatem.local` et en production elle existe par accident
+historique : l'assistant y a tourné en français et a traduit `_("Unit")` — les deux
+bases n'ont d'ailleurs AUCUNE UOM « Unit », ce qui le prouve. Un site neuf n'a pas
+cette chance : ses UOM sortent en anglais et l'installation de `bon_livraison` meurt
+sur « Could not find Default Unit of Measure: Unité ».
+
+On CRÉE plutôt qu'on ne renomme « Unit » : un `rename_doc` réécrirait toutes les
+lignes de documents référençant l'UOM, une création est un ajout pur. Sur les bases
+existantes, le `if` sort sans rien écrire — vérifié en production (« Unité » = 1,
+« Unit » = 0, 239 UOM).
+
+---
+
 ## [1.29.0] - 2026-09-06
 
 ### Le moteur de tests de cycle de vie

@@ -132,6 +132,12 @@ def _traitement_systeme():
 		or flags.in_patch
 		or flags.in_import
 		or flags.in_test
+		# ⚠️ `in_setup_wizard` : l'assistant de configuration crée lui aussi des
+		# documents sous `Administrator`, hors de toute interaction humaine. Sans
+		# cette sortie, une installation partant de zéro (VM de dev recréée, prod
+		# reconstruite) reste bloquée sur l'assistant. Pris sur le fait le 2026-09-06
+		# en montant le site de test.
+		or flags.in_setup_wizard
 	)
 
 

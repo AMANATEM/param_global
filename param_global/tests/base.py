@@ -80,7 +80,13 @@ class CycleDeVieTestCase(FrappeTestCase):
 			apres_annulation(doc)
 
 		# ── « Nouv. version » + enregistrer ──────────────────────────────────
-		nouveau = frappe.copy_doc(doc)
+		# ⚠️ `ignore_no_copy=False` est OBLIGATOIRE pour être fidèle au desk.
+		# Le défaut de `frappe.copy_doc` est `True` — il CONSERVE les champs
+		# `no_copy`, ce que le bouton « Nouv. version » ne fait jamais. Sur un
+		# `Retour`, le champ `delivery_note` (« Bon de Retour ERPNext », no_copy)
+		# était donc recopié et pointait sur un document ANNULÉ : l'insertion
+		# échouait sur « Cannot link cancelled document ». Le desk, lui, l'efface.
+		nouveau = frappe.copy_doc(doc, ignore_no_copy=False)
 		nouveau.amended_from = doc.name
 
 		# ⚠️ `docstatus` doit être remis à 0 à LA MAIN, et c'est propre aux tests.
@@ -145,9 +151,17 @@ class CycleDeVieTestCase(FrappeTestCase):
 	# un Bon de Réception) reste chez l'app propriétaire.
 
 	def creer_client_test(self, nom="_Test Client Cycle", **champs):
-		"""Un Customer minimal, réutilisé s'il existe déjà dans la transaction."""
+		"""Un Customer minimal, réutilisé s'il existe déjà dans la transaction.
+
+		⚠️ `mobile_no` est fourni d'office : l'app `client` l'exige à la CRÉATION
+		(`client/customer.py::validate`), et un décor qui ne le pose pas fait
+		échouer tous les tests des apps qui créent un client — sur un message qui
+		n'a rien à voir avec ce qu'elles testent. Le format suit la règle maison :
+		10 chiffres commençant par 0, sans séparateur.
+		"""
 		if frappe.db.exists("Customer", {"customer_name": nom}):
 			return frappe.get_last_doc("Customer", filters={"customer_name": nom})
+		champs.setdefault("mobile_no", "0600000000")
 		return frappe.get_doc(
 			{
 				"doctype": "Customer",
@@ -162,6 +176,7 @@ class CycleDeVieTestCase(FrappeTestCase):
 		"""Un Supplier minimal."""
 		if frappe.db.exists("Supplier", {"supplier_name": nom}):
 			return frappe.get_last_doc("Supplier", filters={"supplier_name": nom})
+		champs.setdefault("mobile_no", "0600000001")
 		return frappe.get_doc(
 			{
 				"doctype": "Supplier",
@@ -170,3 +185,87 @@ class CycleDeVieTestCase(FrappeTestCase):
 				**champs,
 			}
 		).insert()
+
+	# ── Décor du stock ──────────────────────────────────────────────────────
+	#
+	# Article, entrepôts et stock initial : le décor le plus coûteux du bench,
+	# partagé par les sept documents qui touchent au stock (BL, Retour, BR,
+	# Bon E/S, Écriture, Réconciliation) et par la détection GARAGE.
+	#
+	# ⚠️ Les entrepôts portent les noms RÉELS de la production —
+	# `GARAGE - AMA`, `PRINCIPAL - AMA`, `DEPOT - AMA` — parce que `garage/sync.py`
+	# les compare littéralement. Un entrepôt de test nommé autrement rendrait la
+	# détection GARAGE intestable.
+
+	ENTREPOTS = ("PRINCIPAL", "GARAGE", "DEPOT")
+
+	def societe_test(self):
+		return frappe.defaults.get_defaults().get("company") or frappe.db.get_value("Company", {}, "name")
+
+	def creer_entrepot_test(self, nom="PRINCIPAL"):
+		"""Un entrepôt nommé comme en production : « <nom> - <abbr société> »."""
+		societe = self.societe_test()
+		abbr = frappe.db.get_value("Company", societe, "abbr")
+		complet = f"{nom} - {abbr}"
+		if frappe.db.exists("Warehouse", complet):
+			return complet
+		frappe.get_doc(
+			{
+				"doctype": "Warehouse",
+				"warehouse_name": nom,
+				"company": societe,
+				"parent_warehouse": frappe.db.get_value("Warehouse", {"is_group": 1}, "name"),
+			}
+		).insert(ignore_permissions=True)
+		return complet
+
+	def creer_article_test(self, code="_TEST_ART_1", nom=None, **champs):
+		"""Un article stockable, en « Unité » — l'UOM par défaut du bench."""
+		if frappe.db.exists("Item", code):
+			return frappe.get_doc("Item", code)
+		return frappe.get_doc(
+			{
+				"doctype": "Item",
+				"item_code": code,
+				"item_name": nom or code,
+				"item_group": frappe.db.get_value("Item Group", {"is_group": 0}, "name"),
+				"stock_uom": "Unité",
+				"is_stock_item": 1,
+				**champs,
+			}
+		).insert(ignore_permissions=True)
+
+	def poser_stock(self, item_code, entrepot, qty=100, rate=10):
+		"""Entre du stock par une Écriture de Stock « Material Receipt » validée.
+
+		⚠️ `param_global` autorise le stock négatif, donc ce n'est pas toujours
+		nécessaire — mais un test qui part d'un stock connu dit quelque chose de
+		plus fort qu'un test qui part d'un solde négatif quelconque.
+		"""
+		ecriture = frappe.get_doc(
+			{
+				"doctype": "Stock Entry",
+				"stock_entry_type": "Material Receipt",
+				"company": self.societe_test(),
+				"items": [
+					{"item_code": item_code, "qty": qty, "t_warehouse": entrepot, "basic_rate": rate}
+				],
+			}
+		)
+		ecriture.insert(ignore_permissions=True)
+		ecriture.submit()
+		return ecriture
+
+	def vider_table(self, doctype):
+		"""Vide une table avant un test qui compte ce qu'elle contient.
+
+		⚠️ Nécessaire parce que le rollback de `FrappeTestCase` NE TIENT PAS
+		partout : plusieurs hooks du bench appellent `frappe.db.commit()` —
+		`bon_livraison/delivery_note.py` à la validation, `remise_bancaire/
+		paiement_bl.py` à l'annulation — ce qui valide la transaction entière et
+		laisse des documents derrière. Sans conséquence en CI (site neuf à chaque
+		run) mais fatal à un test qui, comme `statut_garage()`, répond en fonction
+		de ce qui reste en base : 21 pointages oubliés le faisaient répondre
+		« NON OK » quoi qu'on fasse.
+		"""
+		frappe.db.sql(f"DELETE FROM `tab{doctype}`")

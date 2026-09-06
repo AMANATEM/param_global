@@ -89,6 +89,21 @@ def apply_global_params():
 
     # Stock Settings
     frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1)
+
+    # ⚠️ L'UOM doit EXISTER avant d'être désignée comme unité par défaut.
+    # Sur amanatem.local et en production elle existe par accident historique :
+    # l'assistant de configuration y a tourné en français et a traduit _("Unit")
+    # en « Unité » — les deux bases n'ont d'ailleurs AUCUNE UOM « Unit »,
+    # ce qui le prouve. Un site neuf n'a pas cette chance : ses UOM sortent en
+    # anglais et l'installation de `bon_livraison` meurt sur un Link introuvable
+    # (« Could not find Default Unit of Measure: Unité »). Constaté le 2026-09-06.
+    #
+    # On CRÉE plutôt qu'on ne renomme « Unit » : un `rename_doc` réécrirait
+    # toutes les lignes de documents qui référencent l'UOM, alors qu'une création
+    # est un ajout pur. Sur les bases existantes, le `if` sort sans rien écrire.
+    if not frappe.db.exists("UOM", "Unité"):
+        frappe.get_doc({"doctype": "UOM", "uom_name": "Unité"}).insert(ignore_permissions=True)
+
     frappe.db.set_single_value("Stock Settings", "stock_uom", "Unité")
     frappe.db.set_default("stock_uom", "Unité")
 
