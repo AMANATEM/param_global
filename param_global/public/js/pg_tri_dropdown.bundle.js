@@ -165,11 +165,15 @@ param_global.tri_dropdown = {
 		this._css_pose = true;
 		// Les apps posent `pointer-events: none` sur leur en-tête (simple bandeau
 		// décoratif à l'origine) : il faut le rendre cliquable pour trier.
-		$("<style id='pg-tri-dropdown-style'>").text(`
+		$("<style id='pg-tri-dropdown-style'>")
+			.text(
+				`
 			${this.SELECTEUR_ENTETE} { pointer-events: auto !important; }
 			${this.SELECTEUR_ENTETE} > span { cursor: pointer; user-select: none; }
 			${this.SELECTEUR_ENTETE} > span:hover { text-decoration: underline; }
-		`).appendTo("head");
+		`
+			)
+			.appendTo("head");
 	},
 
 	_clic(span) {
@@ -206,8 +210,12 @@ param_global.tri_dropdown = {
 		const args = {
 			txt: terme,
 			doctype,
-			reference_doctype: (controle.get_reference_doctype && controle.get_reference_doctype()) || "",
-			page_length: cint(frappe.boot.sysdefaults && frappe.boot.sysdefaults.link_field_results_limit) || 10,
+			reference_doctype:
+				(controle.get_reference_doctype && controle.get_reference_doctype()) || "",
+			page_length:
+				cint(
+					frappe.boot.sysdefaults && frappe.boot.sysdefaults.link_field_results_limit
+				) || 10,
 		};
 		// C'est ce passage qui pose `query`, `filters` — et notre `pg_tri`, via le
 		// patch de set_custom_query.
@@ -304,7 +312,9 @@ param_global.tri_dropdown = {
 			// dans les deux sens : elle n'a rien à comparer.
 			if (va === "" || vb === "") return va === vb ? 0 : va === "" ? 1 : -1;
 			if (numerique) return facteur * (this._nombre(va) - this._nombre(vb));
-			return facteur * va.localeCompare(vb, undefined, { numeric: true, sensitivity: "base" });
+			return (
+				facteur * va.localeCompare(vb, undefined, { numeric: true, sensitivity: "base" })
+			);
 		});
 
 		// Réordonner, c'est déplacer chaque nœud : inutile — et un reflow de plus —

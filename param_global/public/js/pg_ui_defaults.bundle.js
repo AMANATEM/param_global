@@ -10,7 +10,7 @@ $(function () {
 		$("<style id='param-no-sidebar'>")
 			.text(
 				"body.pg-no-sidebar .layout-side-section { display: none !important; }\n" +
-				"body.pg-no-sidebar .layout-main-section-wrapper { flex: 1 1 auto !important; }"
+					"body.pg-no-sidebar .layout-main-section-wrapper { flex: 1 1 auto !important; }"
 			)
 			.appendTo("head");
 	}
@@ -20,7 +20,7 @@ $(function () {
 		$("<style id='param-no-filterable'>")
 			.text(
 				".filterable { pointer-events: none !important; }\n" +
-				".list-subject a:hover { text-decoration: none !important; }"
+					".list-subject a:hover { text-decoration: none !important; }"
 			)
 			.appendTo("head");
 	}
@@ -35,8 +35,8 @@ $(function () {
 		$("<style id='param-navbar-username-style'>")
 			.text(
 				"header.navbar > .container { position: relative; }\n" +
-				".pg-navbar-username { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);" +
-				" font-size: 15px; font-weight: 700; white-space: nowrap; pointer-events: none; }"
+					".pg-navbar-username { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);" +
+					" font-size: 15px; font-weight: 700; white-space: nowrap; pointer-events: none; }"
 			)
 			.appendTo("head");
 	}
@@ -95,7 +95,10 @@ function _pg_patch_affichage_montants() {
 		const texte = String(valeur);
 		const point = texte.indexOf(".");
 		if (point > -1) {
-			decimales = Math.min(precision_champ, Math.max(PG_DECIMALES_MINI, texte.length - point - 1));
+			decimales = Math.min(
+				precision_champ,
+				Math.max(PG_DECIMALES_MINI, texte.length - point - 1)
+			);
 		}
 
 		return format_number(valeur, this.get_number_format(), decimales);

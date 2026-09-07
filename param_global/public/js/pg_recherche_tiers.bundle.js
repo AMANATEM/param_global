@@ -104,7 +104,6 @@ param_global.recherche_tiers = {
 			// ne connaît pas la nôtre. Nos recherches tiers ignorent `filters` (elles
 			// ne lisent que `txt`), donc les laisser passer est sans effet — et les
 			// retirer priverait un futur appelant d'un filtre légitime.
-
 		};
 
 		ControlLink.prototype._pg_tiers_patche = true;

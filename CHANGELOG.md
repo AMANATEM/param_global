@@ -4,6 +4,35 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.32.1] - 2026-09-07
+
+### Ménage de mise en forme — aucun changement de comportement
+
+Passage de **prettier 2.7.1** — la version épinglée par `.pre-commit-config.yaml` —
+sur les fichiers JS de l'app. Indentation, retours à la ligne et guillemets
+uniquement : le code fait exactement la même chose qu'avant.
+
+⚠️ **Ce commit est volontairement isolé.** Les hooks pre-commit n'étaient installés
+dans AUCUN des 21 dépôts : la configuration existait, mais rien ne l'exécutait, d'où
+une dérive de 2 959 lignes sur 48 fichiers à l'échelle du bench. Les installer sans
+solder d'abord cette dérive aurait fait reformater un fichier ENTIER au premier
+commit utile qui le touche — noyant le diff réel sous des centaines de lignes de
+présentation. C'est la règle du CLAUDE.md : « une dérive de formatage préexistante
+ne se corrige pas au passage, elle mérite son propre commit de ménage ».
+
+Contrôles avant de committer :
+
+- les 77 fichiers du périmètre parsent avant **et** après (`node --check`) ;
+- un second passage de prettier ne change plus rien — le hook serait désormais un
+  no-op ;
+- les 3 bibliothèques tierces (`pdf.min.js`, `pdf.worker.min.js`, `qz-tray.js`)
+  sont épargnées, `public/js/lib/` étant exclu comme le fait le hook lui-même.
+
+⚠️ Rien n'étant modifié fonctionnellement, le `bench build` de la séquence de
+promotion est ici sans effet utile : le bundle compilé fera la même chose.
+
+---
+
 ## [1.32.0] - 2026-09-07
 
 ### 12 tests de la recherche d'articles, et les actions GitHub relevées

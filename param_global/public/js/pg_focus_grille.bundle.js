@@ -116,7 +116,7 @@ param_global.focus_grille = {
 			(e) => {
 				if (e.isTrusted && (e.key === "Escape" || e.key === "Tab")) rendre_la_main(e);
 			},
-			true,
+			true
 		);
 	},
 
@@ -361,7 +361,7 @@ param_global.focus_grille = {
 				(it.ligne + 1) +
 				'"] [data-fieldname="' +
 				it.champ +
-				'"] input',
+				'"] input'
 		);
 	},
 

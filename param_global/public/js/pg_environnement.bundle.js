@@ -57,7 +57,9 @@ function pg_env_poser_libelle(env) {
 	// d'un téléphone n'a pas la place, et « DEV » seul suffit à alerter.
 	$home.after(
 		"<span id='pg-env-badge' class='pg-env-badge' title='" +
-			__("Ce site n'est PAS la production — les données saisies ici ne sont pas conservées.") +
+			__(
+				"Ce site n'est PAS la production — les données saisies ici ne sont pas conservées."
+			) +
 			"'>" +
 			frappe.utils.escape_html(env) +
 			"<span class='pg-env-long'> &mdash; " +

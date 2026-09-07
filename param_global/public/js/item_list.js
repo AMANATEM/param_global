@@ -60,10 +60,12 @@ frappe.listview_settings["Item"] = frappe.listview_settings["Item"] || {};
 		}
 
 		// ── Reset au tri par défaut à chaque navigation vers la liste Article ──
-		$(document).off("page-change.item_sort").on("page-change.item_sort", function () {
-			if (frappe.get_route_str() === "List/Item/List") {
-				manual_refresh();
-			}
-		});
+		$(document)
+			.off("page-change.item_sort")
+			.on("page-change.item_sort", function () {
+				if (frappe.get_route_str() === "List/Item/List") {
+					manual_refresh();
+				}
+			});
 	};
 })();
