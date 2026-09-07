@@ -4,6 +4,39 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.32.0] - 2026-09-07
+
+### 12 tests de la recherche d'articles, et les actions GitHub relevées
+
+`test_recherche_articles.py` couvre la raison d'être du module : **le tri part au
+SERVEUR, avant le `LIMIT`**. Sans lui, la base renvoyait les 50 premiers articles
+par code et le navigateur ne pouvait réordonner que ceux-là — demander « les
+articles en stock au garage » sur une recherche qui en compte 255 donnait une
+réponse fausse.
+
+⚠️ L'injection SQL est éprouvée explicitement : le sens du tri part dans le SQL
+**par concaténation** (un `ORDER BY` ne se paramètre pas), donc `"; DROP TABLE
+tabItem --"` doit être réduit à `ASC`, et une colonne inconnue renvoyer `None`
+plutôt qu'une expression.
+
+⚠️ Le piège de « Dern. achat » est figé : il ne se calcule pas pareil d'une app à
+l'autre, et le tri doit porter sur la valeur **réellement affichée**. La
+multiplication par la TVA n'étant pas monotone — 100 HT à 20 % passe devant 110 HT
+à 0 % — trier sur le HT donnerait un ordre faux.
+
+Couvre aussi la fenêtre à 70 résultats (`PAGE_LEN_MINI`), la recherche multi-mots
+dans n'importe quel ordre, et le fait que les jointures ne sont posées que si l'on
+trie dessus.
+
+### Actions GitHub relevées
+
+`checkout@v5`, `setup-python@v6`, `setup-node@v5` : GitHub avait déprécié Node 20 et
+forçait les versions précédentes sur Node 24 en émettant un avertissement à chaque
+run. Corrigé dans le gabarit `param_global/scripts/ci_tests.yml` et propagé aux 21
+dépôts par `generer_ci.py` — ne pas modifier ce fichier ici.
+
+---
+
 ## [1.31.0] - 2026-09-06
 
 ### La CI, et le gabarit qui la génère

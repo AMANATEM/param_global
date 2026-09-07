@@ -41,16 +41,19 @@ jobs:
         ports: ["6379:6379"]
 
     steps:
+      # ⚠️ Versions d'actions relevées le 2026-09-07 : GitHub a déprécié Node 20 et
+      # forçait ces trois actions sur Node 24 en émettant un avertissement à chaque
+      # run. Les majeures suivantes tournent nativement sur Node 24.
       - name: Récupérer le code de cette app
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: app_source
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "18"
 

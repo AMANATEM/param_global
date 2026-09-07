@@ -41,16 +41,19 @@ jobs:
         ports: ["6379:6379"]
 
     steps:
+      # ⚠️ Versions d'actions relevées le 2026-09-07 : GitHub a déprécié Node 20 et
+      # forçait ces trois actions sur Node 24 en émettant un avertissement à chaque
+      # run. Les majeures suivantes tournent nativement sur Node 24.
       - name: Récupérer le code de cette app
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: app_source
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "18"
 
@@ -103,7 +106,14 @@ jobs:
           cd ~/frappe-bench
           mv "$GITHUB_WORKSPACE/app_source" "apps/$APP"
           bench pip install -e "apps/$APP"
-          grep -qx "$APP" sites/apps.txt || echo "$APP" >> sites/apps.txt
+          # ⚠️ `sites/apps.txt` ne se termine PAS par un saut de ligne (vérifié :
+          # dernier octet 0x74, pas 0x0a). Un `echo >>` nu colle donc le nom sur la
+          # ligne précédente — Frappe cherche ensuite un module « bon_esparam_global »
+          # et `bench new-site` meurt sur un ModuleNotFoundError sans rapport apparent.
+          if ! grep -qx "$APP" sites/apps.txt; then
+            [ -n "$(tail -c1 sites/apps.txt)" ] && echo >> sites/apps.txt
+            echo "$APP" >> sites/apps.txt
+          fi
 
       - name: Créer le site de test
         run: |
