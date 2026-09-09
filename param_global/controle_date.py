@@ -116,6 +116,28 @@ _FUTUR = {
 }
 
 
+#: Clé de `site_config.json` qui LÈVE ce verrou et celui du périmètre de la
+#: prime de fidélisation (`commission.fidelite`), le temps d'une campagne de
+#: tests : elle permet de dater librement les documents pour rejouer un scénario.
+#:
+#: ⚠️ ELLE VIT DANS `site_config.json`, HORS GIT, ET C'EST TOUT L'INTÉRÊT. Mettre
+#: un drapeau dans le code aurait suffi pour DEV, mais ce drapeau serait parti en
+#: production au premier `git pull` — et y aurait ouvert, en silence, la saisie
+#: antidatée sur les neuf documents du bench. Ici, la prod n'a pas la clé, donc
+#: la promotion de ce code ne change rien pour elle. Même mécanisme, et mêmes
+#: raisons, que la clé `environnement` du bandeau DEV.
+#:
+#: ⚠️ Pour remettre les verrous :
+#:     bench --site <site> set-config tests_sans_verrous 0
+#: Une valeur fausse suffit, il n'est pas nécessaire de retirer la clé.
+CLE_TESTS = "tests_sans_verrous"
+
+
+def verrous_leves():
+	"""Vrai si ce site est en campagne de tests, verrous chronologiques levés."""
+	return bool(frappe.conf.get(CLE_TESTS))
+
+
 def _traitement_systeme():
 	"""Vrai hors interaction humaine : migration, patch, import, test.
 
@@ -193,7 +215,7 @@ def verifier_date_validation(date_document, document):
 	delà on date un document d'un jour qui n'existe pas encore. La borne haute
 	autorise demain, pour la livraison préparée la veille au soir.
 	"""
-	if not date_document or _traitement_systeme():
+	if not date_document or _traitement_systeme() or verrous_leves():
 		return
 
 	date_document = getdate(date_document)
@@ -230,7 +252,7 @@ def verifier_date_annulation(date_document, document):
 	ne clôt rien, et un document daté au-delà de demain ne peut venir que de
 	l'Administrateur — le refuser à l'annulation coincerait tout le monde.
 	"""
-	if not date_document or _traitement_systeme():
+	if not date_document or _traitement_systeme() or verrous_leves():
 		return
 
 	date_document = getdate(date_document)

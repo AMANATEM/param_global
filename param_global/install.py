@@ -1,5 +1,6 @@
 import frappe
 
+from param_global import controle_date
 from param_global.grilles import appliquer_grilles_utilisateurs
 from param_global.sons import appliquer_son_muet
 from param_global.validation import creer_champs as creer_champs_validation
@@ -27,6 +28,13 @@ def extend_bootinfo(bootinfo):
     # Clé absente = production, donc aucun marquage : c'est la valeur sûre pour
     # l'écran des utilisateurs finaux. La clé se pose sur la machine de DEV.
     bootinfo["environnement"] = (frappe.conf.get("environnement") or "").strip().upper()
+
+    # Campagne de tests : verrous chronologiques levés (clé `tests_sans_verrous`
+    # de site_config.json, cf. `controle_date.CLE_TESTS`). Exposé au desk pour
+    # que `pg_controle_date.bundle.js` cesse aussi de DEMANDER confirmation à
+    # l'Administrateur : le serveur ne refuse plus rien, une confirmation qui ne
+    # protège plus de rien n'est que de la friction.
+    bootinfo["tests_sans_verrous"] = bool(frappe.conf.get(controle_date.CLE_TESTS))
 
 
 def _param_systeme(champ, valeur):

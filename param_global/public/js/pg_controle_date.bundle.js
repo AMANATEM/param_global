@@ -33,6 +33,15 @@ param_global.controle_date = {
 	confirmer_date_hors_fenetre: function (frm, document, geste, fieldname) {
 		const date_doc = frm.doc[fieldname || "date"];
 
+		// ⚠️ Campagne de tests : le serveur ne refuse plus rien (clé
+		// `tests_sans_verrous` de site_config.json, cf. `controle_date.py`), donc
+		// une confirmation ne protégerait plus de rien — elle ne serait que de la
+		// friction sur chaque document rejoué. Absente en production, la clé y
+		// laisse ce garde-fou intact.
+		if (frappe.boot && frappe.boot.tests_sans_verrous) {
+			return;
+		}
+
 		// Pour tout autre compte, c'est le serveur qui tranche (et qui refuse) :
 		// inutile de demander une confirmation à quelqu'un qui n'ira pas au bout.
 		if (frappe.session.user !== "Administrator") {

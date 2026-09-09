@@ -4,6 +4,33 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.33.0] - 2026-09-09
+
+### Levée temporaire des verrous par `site_config.json`
+
+Nouvelle clé **`tests_sans_verrous`** : quand elle est posée, le verrou
+chronologique cesse de refuser les dates anciennes, et la borne de démarrage de
+la prime de fidélisation (app `commission`) est ignorée. Destinée à une campagne
+de tests sur une machine de développement.
+
+```bash
+bench --site <site> set-config tests_sans_verrous 1   # lever
+bench --site <site> set-config tests_sans_verrous 0   # remettre
+```
+
+⚠️ **ELLE VIT DANS `site_config.json`, HORS GIT, ET C'EST TOUT L'INTÉRÊT.** Un
+drapeau dans le code aurait suffi pour DEV, mais il serait parti en production au
+premier `git pull` — et y aurait ouvert, en silence, la saisie antidatée sur les
+neuf documents du bench. La prod n'a pas la clé : promouvoir ce code n'y change
+rien. Même mécanisme, et mêmes raisons, que la clé `environnement` du bandeau DEV.
+
+La confirmation posée à l'Administrateur côté navigateur est levée avec le reste :
+le serveur ne refusant plus rien, elle ne protégerait plus de rien.
+
+5 tests, dont un qui vérifie que **sans la clé, le refus revient** — sans lui, une
+levée laissée en place passerait inaperçue, toute la suite restant verte alors que
+le verrou ne protégerait plus rien.
+
 ## [1.32.1] - 2026-09-07
 
 ### Ménage de mise en forme — aucun changement de comportement
