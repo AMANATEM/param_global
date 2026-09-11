@@ -4,6 +4,63 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.34.0] - 2026-09-11
+
+### L'article support des lignes manuelles ne porte plus de tarif
+
+`I00001` portait quatre vrais `Item Price` — 111,80 sur les trois tarifs de vente,
+20,00 en achat. Conséquence visible : on ouvrait une ligne manuelle au double-clic,
+on tapait la quantité, et ERPNext posait 111,80 dans le prix.
+
+La cause n'était pas là où on la cherchait. `insert_item_price()` d'ERPNext n'est
+pas seulement appelé quand on choisit un article à l'écran : il l'est aussi **au
+cœur du `validate` du Purchase Receipt** (`set_missing_item_details` →
+`get_price_list_rate`). Chaque BR portant une ligne manuelle gravait donc son
+montant du jour dans les tarifs. `bon_reception` écartait pourtant déjà `I00001`
+de ses propres écritures de prix : le trou était dans le mécanisme natif.
+
+`article_manuel.forcer_a_zero` (hook `validate` sur `Item Price`) ramène le tarif
+à 0,00 quoi qu'on saisisse, sur toutes les listes de prix. `purger_tarifs()` enlève
+les lignes héritées, à chaque migrate.
+
+⚠️ **Le garde-fou FORCE la valeur, il ne refuse pas l'écriture.** Une première
+version levait une exception : comme `insert_item_price()` n'est protégé par aucun
+`try/except` chez son appelant, cela faisait échouer l'enregistrement du Bon de
+Réception tout entier. Pris sur le fait sur un BR de test, avant mise en production.
+
+### Avertissement « article en double » — les sept grilles
+
+Nouveau `pg_doublon_article.bundle.js` : saisir un article déjà présent ouvre une
+question à deux boutons — **Oui, ajouter** / **Non, retirer** —, bilingue français
+et arabe, nommant le produit et la ligne déjà occupée.
+
+« Non » remet la ligne dans l'état d'avant : vidée si elle était neuve, mais
+**restaurée sur l'article précédent** si on était en train de le corriger. Le
+curseur revient sur la cellule. Fermer par la croix ne retire rien.
+
+Écrit une seule fois pour les sept grilles du bench, et non recopié sept fois.
+
+### Les deux refus de prix, mutualisés et bilingues
+
+`pg_montant_nul.bundle.js` + `montant_nul.py`, `pg_vente_perte.bundle.js` +
+`vente_perte.py`. Ces blocs vivaient en **trois exemplaires identiques au caractère
+près** (`bon_livraison`, `bon_reception`, `devis`) pour le montant nul, et en double
+client/serveur pour la vente à perte.
+
+- Le triangle jaune ⚠️ du montant nul devient un **grand « 0 » rouge**, des deux
+  côtés : averti ou refusé, c'est le même défaut. La vente à perte garde son 📉 —
+  les deux refus tombent sur le même bouton, ils doivent se distinguer sans lecture.
+- Les deux messages passent en **français + arabe**, y compris les en-têtes du
+  tableau de la vente à perte.
+- ⚠️ **Format de nombre corrigé côté serveur.** `vente_perte` formatait avec
+  `"{:,.2f}"`, le format ANGLAIS : une perte de 1 292,60 DH s'affichait
+  « 1,292.60 » alors que le dialogue client écrivait « 1.292,60 ».
+
+### Tests
+
+19 nouveaux tests : `test_article_manuel` (7) et `test_messages_prix` (12), dont
+un test de non-régression dédié au format de nombre français.
+
 ## [1.33.0] - 2026-09-09
 
 ### Levée temporaire des verrous par `site_config.json`

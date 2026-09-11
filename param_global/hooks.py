@@ -45,6 +45,9 @@ app_include_js = [
 	"pg_init_doctype.bundle.js",
 	"pg_controle_date.bundle.js",
 	"pg_loupes.bundle.js",
+	"pg_doublon_article.bundle.js",
+	"pg_montant_nul.bundle.js",
+	"pg_vente_perte.bundle.js",
 ]
 
 # include js, css files in header of web template
@@ -170,6 +173,11 @@ doc_events = {
 		],
 	},
 	"Item Price": {
+		# ⚠️ `validate` et non `before_insert` : la remise à zéro doit aussi
+		# couvrir la MISE À JOUR d'un tarif existant, pas seulement sa création.
+		# Et elle ne lève JAMAIS d'exception — cet événement s'exécute au cœur du
+		# `validate` du Bon de Réception. Cf. param_global/article_manuel.py.
+		"validate": "param_global.article_manuel.forcer_a_zero",
 		"on_save": "param_global.stock_sync.on_item_price_change",
 		"on_trash": "param_global.stock_sync.on_item_price_change",
 	},

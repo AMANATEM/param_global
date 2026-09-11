@@ -1,6 +1,7 @@
 import frappe
 
 from param_global import controle_date
+from param_global.article_manuel import purger_tarifs as purger_tarifs_article_manuel
 from param_global.grilles import appliquer_grilles_utilisateurs
 from param_global.sons import appliquer_son_muet
 from param_global.validation import creer_champs as creer_champs_validation
@@ -182,6 +183,11 @@ def apply_global_params():
 
     # Son du desk coupé pour tous les utilisateurs (validation, annulation…).
     appliquer_son_muet()
+
+    # L'article support des lignes manuelles (I00001) ne doit porter AUCUN tarif :
+    # son prix n'a pas de sens et se reproposait sur chaque nouvelle ligne
+    # manuelle. Rejoué à chaque migrate — cf. article_manuel.py.
+    purger_tarifs_article_manuel()
 
     frappe.db.commit()
 
