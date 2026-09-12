@@ -14,16 +14,16 @@ ne réintroduise le refus.
 """
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
 
 from param_global.article_manuel import ARTICLE_MANUEL, forcer_a_zero, purger_tarifs
 
+from .base import CycleDeVieTestCase
 from .utils import utilisateur_reel
 
 TARIF_TEST = "_Test Tarif Article Manuel"
 
 
-class TestArticleManuel(FrappeTestCase):
+class TestArticleManuel(CycleDeVieTestCase):
 	def setUp(self):
 		if not frappe.db.exists("Price List", TARIF_TEST):
 			frappe.get_doc(
@@ -37,6 +37,18 @@ class TestArticleManuel(FrappeTestCase):
 				}
 			).insert(ignore_permissions=True)
 		purger_tarifs()
+
+		# ⚠️ `purger_tarifs()` ne vide que les tarifs de l'article support. Il
+		# faut aussi défaire ceux posés sur l'article de comparaison : le
+		# rollback de `FrappeTestCase` NE TIENT PAS dans ce bench (plusieurs
+		# hooks appellent `frappe.db.commit()`), donc un Item Price survit au
+		# run et le suivant échoue en `ItemPriceDuplicateItem`. Constaté en
+		# corrigeant le run CI 34693168895.
+		#
+		# ⚠️ On vide notre PROPRE liste de prix, jamais la table `Item Price`
+		# entière : `before_tests` d'erpnext le fait déjà et c'est précisément
+		# ce qui interdit de lancer la suite sur `amanatem.local`.
+		frappe.db.delete("Item Price", {"price_list": TARIF_TEST})
 
 	def _creer_tarif(self, rate):
 		return frappe.get_doc(
@@ -72,10 +84,25 @@ class TestArticleManuel(FrappeTestCase):
 			self._creer_tarif(999.0)  # ne doit rien lever
 
 	def test_autre_article_intact(self):
-		"""Le forçage ne vaut que pour l'article support."""
-		autre = frappe.db.get_value(
-			"Item", {"disabled": 0, "name": ["!=", ARTICLE_MANUEL]}, "name"
-		)
+		"""Le forçage ne vaut que pour l'article support.
+
+		⚠️ L'article de comparaison est FABRIQUÉ, jamais pioché en base.
+
+		La version d'origine prenait « n'importe quel Item actif autre que
+		I00001 ». Sur cette VM elle en trouvait un parmi 13 710 ; en CI, sur un
+		site neuf, le SEUL article existant est `I00001` — que `param_global`
+		pose lui-même. La requête renvoyait `None` et ERPNext refusait l'Item
+		Price sur « Item None not found. » (run 34693168895, et déjà le
+		précédent). Le test vert en local échouait donc systématiquement en CI.
+		"""
+		autre = self.creer_article_test(code="_TEST_ART_TARIF").name
+
+		# ⚠️ Créer un Item AUTO-CRÉE un tarif à 0 dans CHAQUE liste de prix
+		# activée — `insert_item_price()` d'ERPNext, le même mécanisme que celui
+		# qui gravait 111,80 sur `I00001` (cf. l'en-tête de ce fichier). Notre
+		# propre liste en reçoit donc un, et l'insertion ci-dessous échouait en
+		# `ItemPriceDuplicateItem`. On défait ce tarif automatique, lui seul.
+		frappe.db.delete("Item Price", {"item_code": autre, "price_list": TARIF_TEST})
 		doc = frappe.get_doc(
 			{
 				"doctype": "Item Price",

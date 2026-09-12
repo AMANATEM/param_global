@@ -4,6 +4,33 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.35.1] - 2026-09-12
+
+### Le test de l'article manuel échouait en CI, jamais en local
+
+`test_autre_article_intact` prenait « n'importe quel Item actif autre que
+`I00001` ». Sur cette VM il en trouvait un parmi 13 710 ; en CI, sur un site
+neuf, **le seul article existant est `I00001`** — que `param_global` pose
+lui-même. La requête renvoyait `None`, ERPNext refusait l'Item Price sur « Item
+None not found. », et le job rougissait à chaque push depuis le 2026-09-11
+(runs 34618746780 et 34693168895). L'article de comparaison est désormais
+**fabriqué** par `creer_article_test()`, jamais pioché en base.
+
+⚠️ Le correctif en a découvert un second : **créer un Item auto-crée un tarif à
+0 dans chaque liste de prix activée** (`insert_item_price()` d'ERPNext). C'est le
+mécanisme même que ce fichier teste — celui qui avait gravé 111,80 sur `I00001`.
+Notre liste de test en recevait un, et l'insertion suivante échouait en
+`ItemPriceDuplicateItem`. Le tarif automatique est défait, lui seul.
+
+⚠️ `setUp` vide aussi la liste de prix du test : le rollback de `FrappeTestCase`
+ne tient pas dans ce bench, plusieurs hooks commitent. La table `Item Price`
+entière n'est JAMAIS vidée — c'est ce que fait `before_tests` d'erpnext, et
+c'est précisément ce qui interdit de lancer la suite sur `amanatem.local`.
+
+Aucun changement de comportement : ce commit ne touche qu'aux tests.
+
+---
+
 ## [1.35.0] - 2026-09-12
 
 ### « Article en double » : un pictogramme qui nomme le défaut
