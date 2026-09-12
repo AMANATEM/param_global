@@ -33,6 +33,24 @@ frappe.provide("param_global.doublon_article");
 	// signaleraient l'une l'autre comme doublons, sur chaque document.
 	const ARTICLE_MANUEL = "I00001";
 
+	// Le compteur d'occurrences plein cadre, en orange — frère du « 0 » rouge de
+	// `pg_montant_nul` et du « 📉 » de `pg_vente_perte`. Même raison d'être : le
+	// pictogramme nomme le défaut avant même qu'on ait lu une ligne de texte, et
+	// les trois refus de saisie doivent se distinguer au premier coup d'œil.
+	//
+	// ⚠️ Il porte le NOMBRE réel d'occurrences (×2, ×3…), ce qu'aucun emoji ne
+	// sait dire — et c'est précisément l'information qui manquait : le texte ne
+	// mentionnait le total qu'à partir de trois lignes.
+	//
+	// ⚠️ Posé AVANT le bloc arabe, dans le conteneur LTR du dialogue : à
+	// l'intérieur du bloc `dir="rtl"`, l'algorithme bidirectionnel écrirait « 2× ».
+	function compteur(nb_total) {
+		return (
+			'<div style="text-align:center;font-size:3.5em;font-weight:900;color:#e07000;' +
+			`line-height:1;margin-bottom:10px">×${nb_total}</div>`
+		);
+	}
+
 	// Les sept tables enfants du bench, toutes sous le champ `items` de leur
 	// parent (vérifié sur les sept JSON le 2026-09-11).
 	const TABLES = [
@@ -75,7 +93,7 @@ frappe.provide("param_global.doublon_article");
 		// mais sur un bloc entier. `text-align:right` garde l'alignement arabe.
 		const bloc_article = (rtl) =>
 			`<div dir="ltr" style="font-size:1.08em;margin-bottom:.5em` +
-			`${rtl ? ";text-align:right" : ""}">⚠️ ${article}</div>`;
+			`${rtl ? ";text-align:right" : ""}">${article}</div>`;
 
 		const total_fr =
 			nb_total > 2 ? ` Il apparaît sur <b>${nb_total}</b> lignes en tout.` : "";
@@ -101,6 +119,7 @@ frappe.provide("param_global.doublon_article");
 			`<div style="margin-top:.6em;font-weight:600">هل تريد إضافته رغم ذلك؟</div>`;
 
 		return (
+			compteur(nb_total) +
 			`<div>${fr}</div>` +
 			`<div dir="rtl" lang="ar" style="text-align:right;margin-top:.8em;` +
 			`padding-top:.8em;border-top:1px solid rgba(0,0,0,.15)">${ar}</div>`

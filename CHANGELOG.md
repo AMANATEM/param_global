@@ -4,6 +4,40 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.35.0] - 2026-09-12
+
+### « Article en double » : un pictogramme qui nomme le défaut
+
+Le dialogue du doublon s'ouvrait sur un petit ⚠️ collé devant le nom de
+l'article — le triangle générique de tous les avertissements du desk, qui ne
+disait pas DE QUOI il s'agissait. C'est exactement le reproche qui avait valu au
+montant nul son « **0** » rouge plein cadre la veille.
+
+Il s'ouvre désormais sur un **×2** orange (ou ×3, ×4…), même taille et même
+place que le zéro rouge de `pg_montant_nul` et que le 📉 de `pg_vente_perte` :
+trois défauts qui tombent sur le même geste, trois repères qui ne se confondent
+pas. Le petit ⚠️ est retiré, devenu redondant.
+
+⚠️ Le chiffre est le **nombre réel d'occurrences**, ce qu'aucun emoji ne sait
+dire — et c'est précisément l'information qui manquait : le texte ne mentionnait
+le total qu'à partir de trois lignes.
+
+⚠️ Il est posé **avant** le bloc arabe, dans le conteneur LTR du dialogue. À
+l'intérieur du bloc `dir="rtl"`, l'algorithme bidirectionnel l'écrirait « 2× ».
+
+### Tests
+
+Trois cas ajoutés à `test_messages_prix.py`. Ce refus-ci n'a **pas** de versant
+serveur (deux lignes du même article sont légitimes : on pose une question, on
+ne refuse rien), les tests lisent donc le fichier source du bundle. Levier
+faible, mais le seul disponible côté Python pour la règle qu'il protège.
+
+⚠️ Le fichier CITE ses deux frères en commentaire : la comparaison se fait sur
+le source privé de ses lignes de commentaire, sans quoi le 📉 cité s'y lit comme
+un pictogramme partagé.
+
+---
+
 ## [1.34.0] - 2026-09-11
 
 ### L'article support des lignes manuelles ne porte plus de tarif

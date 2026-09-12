@@ -144,3 +144,52 @@ class TestVentePerte(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			vente_perte.refuser(LIGNES_PERTE)
 		self.assertIn('<table dir="ltr"', _message())
+
+
+class TestPictogrammeDoublon(FrappeTestCase):
+	"""Le troisième refus de saisie — « article en double ».
+
+	⚠️ Il n'a PAS de versant serveur : deux lignes du même article sont
+	parfaitement légitimes (deux prix, deux remises), on ne refuse rien, on pose
+	une question. Le dialogue vit donc uniquement dans
+	`public/js/pg_doublon_article.bundle.js`.
+
+	Ces tests lisent le FICHIER SOURCE. C'est un test faible — il ne prouve pas
+	que le dialogue s'affiche —, mais c'est le seul levier disponible côté
+	Python, et ce qu'il protège est précisément la règle que les deux classes
+	ci-dessus protègent déjà : trois défauts qui tombent au même moment, sur le
+	même geste, doivent se reconnaître AVANT qu'on lise le texte.
+	"""
+
+	@staticmethod
+	def _source():
+		return frappe.read_file(
+			frappe.get_app_path("param_global", "public", "js", "pg_doublon_article.bundle.js")
+		)
+
+	@classmethod
+	def _code(cls):
+		"""Le source SANS ses commentaires.
+
+		⚠️ Le fichier CITE ses deux frères en commentaire (« frère du « 0 » rouge
+		et du « 📉 » »), et une recherche naïve y voyait un pictogramme partagé.
+		"""
+		return "\n".join(
+			l for l in cls._source().splitlines() if not l.lstrip().startswith("//")
+		)
+
+	def test_compteur_plein_cadre(self):
+		"""Le « ×2 » orange, frère du « 0 » rouge et du « 📉 »."""
+		src = self._code()
+		self.assertIn("#e07000", src)
+		self.assertIn("font-size:3.5em", src)
+		self.assertIn("×${nb_total}", src)
+
+	def test_pas_de_triangle_generique(self):
+		"""⚠️ est le pictogramme de TOUS les avertissements : il ne nomme rien."""
+		self.assertNotIn("⚠️ ${article}", self._code())
+
+	def test_pictogramme_distinct_des_deux_refus_de_prix(self):
+		src = self._code()
+		self.assertNotIn("📉", src)
+		self.assertNotIn("#cc0000", src)
