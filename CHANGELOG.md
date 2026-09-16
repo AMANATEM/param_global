@@ -4,6 +4,17 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.36.0] - 2026-09-16
+
+### Grille du Bon de Commande : colonne Unité
+
+`Purchase Order Item` passe à Article 2 · Qté 1 · **Unité 1** · Prix 1 ·
+Montant 2 (le Prix cède une largeur). La colonne sert au choix de l'unité par
+ligne, livré dans `bon_commande` 0.22.0.
+
+Nouveau `tests/test_grilles.py` : aucune grille ne dépasse la largeur 10 (au-delà
+une colonne disparaît en silence), et celle du BC porte bien l'unité.
+
 ## [1.35.1] - 2026-09-12
 
 ### Le test de l'article manuel échouait en CI, jamais en local

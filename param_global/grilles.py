@@ -75,7 +75,8 @@ GRILLES = {
         "Purchase Order Item": [
             ("item_code", 2),
             ("qty", 1),
-            ("rate", 2),
+            ("uom", 1),
+            ("rate", 1),
             ("amount", 2),
         ],
     },
