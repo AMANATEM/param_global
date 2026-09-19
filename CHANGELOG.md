@@ -4,6 +4,32 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.36.1] - 2026-09-19
+
+### Une ligne manuelle ne perd plus son code article
+
+Scénario : on efface l'article d'une ligne, puis on double-clique pour la
+passer en saisie manuelle. Le contrôle Link, constatant que sa case avait été
+vidée, écrivait `item_code = ""` APRÈS le double-clic, par-dessus `I00001`.
+L'écran montrait toujours la désignation, mais la ligne n'avait plus de code :
+cellule vide au premier Entrée, « Dern. prix achat » remis à 0, et
+« Champs obligatoires requis : Code de l'Article » à l'enregistrement.
+
+Nouveau `public/js/pg_ligne_manuelle.bundle.js`, chargé desk-wide, qui sert
+d'un coup les cinq formulaires à ligne manuelle (BL, Retour, Devis, Bon de
+Commande, Bon de Réception) :
+
+- `frappe.model.set_value` refuse, sur une ligne manuelle, tout `item_code`
+  autre que `I00001` — l'écriture est arrêtée à la source, sans déclencher
+  aucun handler ;
+- filet au `validate` (qui précède le contrôle des champs obligatoires) :
+  chaque ligne manuelle retrouve son code, sa désignation et son unité.
+
+⚠️ `hooks.py` change : en prod, `bench build --app param_global` **et**
+`supervisorctl restart all`.
+
+Nouveau `tests/test_ligne_manuelle.py`.
+
 ## [1.36.0] - 2026-09-16
 
 ### Grille du Bon de Commande : colonne Unité
