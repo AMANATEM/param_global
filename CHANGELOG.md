@@ -4,6 +4,48 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.37.0] - 2026-10-07
+
+### Une frappe rapide n'est plus effacée sous les doigts
+
+Deux symptômes, sur tous les formulaires du bench :
+
+- on ouvre un BL et l'on tape vite « ABCDEFG » au Client : l'écran affiche
+  « DEFG » ;
+- on choisit un article, Entrée, on tape « 105 » dans la Quantité : l'écran
+  affiche « 1 ».
+
+**Causes.** Au premier cas, chaque rafraîchissement d'un champ réécrit la case
+avec la valeur du document — vide tant qu'aucun client n'est choisi. Le contrôle
+Link appelle même `set_formatted_input()` sans argument, ce qui vide la case à
+chaque passage. Au second cas, la réponse du serveur à la sélection de
+l'article (prix, unité) arrive pendant la frappe et pose sa quantité par
+défaut, 1, par-dessus.
+
+**Correctif — nouveau bundle `pg_saisie_protegee.bundle.js`.** Une case qui a
+le curseur et a reçu une vraie frappe n'est plus réécrite : jamais par une
+valeur vide, et, sur un champ numérique (Quantité, Prix, Remise, Montant),
+par aucune valeur tant qu'on ne l'a pas quittée. La valeur tapée est ensuite
+enregistrée normalement. Les champs texte ne sont pas concernés par le second
+volet : choisir un client dans la liste doit continuer à remplacer « you ».
+
+⚠️ `frappe.ui.form.ControlData` n'est **pas** la classe dont héritent Link et
+consorts : ERPNext la remplace par une sous-classe (`telephony.js`). Le garde-fou
+est donc posé sur le prototype qui définit réellement la méthode, retrouvé
+depuis le parent de `ControlLink`.
+
+`pg_focus_grille` ne sélectionne plus le contenu d'un champ dans lequel
+l'utilisateur a déjà tapé : la lettre suivante écrasait sinon la sélection.
+
+⚠️ `hooks.py` a changé (nouveau bundle) : `bench build --app param_global` puis
+`supervisorctl restart all` en prod.
+
+### « Validé le » du Bon de Réception en 2e colonne
+
+`ANCRAGES_SPECIFIQUES` : `Purchase Receipt` → `set_posting_time`, sous la date
+et l'heure. « Créé par » passe en tête de la 3e colonne (`bon_reception`
+0.48.0), qui réaligne le `field_order` figé du doctype.
+
 ## [1.36.1] - 2026-09-19
 
 ### Une ligne manuelle ne perd plus son code article

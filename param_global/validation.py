@@ -69,6 +69,11 @@ ANCRAGES_SPECIFIQUES = {
 	# déplacé en 3e colonne, l'ancrage par défaut (`cree_par`) l'y aurait entraîné.
 	"Quotation": "transaction_date",
 	"Purchase Order": "transaction_date",
+	# Bon de Réception (et Bon E/S, même doctype) : 2e colonne, sous la date et
+	# l'heure — « Créé par » est parti en tête de la 3e colonne (bon_reception).
+	# ⚠️ Ce doctype a un `field_order` figé : c'est `bon_reception` qui le
+	# réaligne sur cet ancrage, après coup (`_aligner_field_order`).
+	"Purchase Receipt": "set_posting_time",
 }
 
 

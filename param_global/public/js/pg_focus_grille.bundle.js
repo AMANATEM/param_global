@@ -90,6 +90,7 @@ param_global.focus_grille = {
 	_intention: null,
 	_dernier: null, // dernier input de grille ayant eu le focus
 	_geste: 0, // horodatage du dernier geste délibéré de l'utilisateur
+	_frappe: 0, // horodatage de la dernière frappe réelle dans un champ
 	_mutation: 0, // horodatage du dernier re-rendu de grille observé
 	_observees: null,
 
@@ -109,6 +110,16 @@ param_global.focus_grille = {
 			this._geste = performance.now();
 			this.annuler("geste de l'utilisateur");
 		};
+		// Toute frappe réelle est horodatée : une fois que l'utilisateur a
+		// commencé à écrire, le moteur ne sélectionne plus le contenu du champ
+		// (cf. `_poser`).
+		document.addEventListener(
+			"input",
+			(e) => {
+				if (e.isTrusted) this._frappe = performance.now();
+			},
+			true
+		);
 		document.addEventListener("mousedown", rendre_la_main, true);
 		document.addEventListener("touchstart", rendre_la_main, true);
 		document.addEventListener(
@@ -325,7 +336,16 @@ param_global.focus_grille = {
 		} catch (e) {
 			input.focus();
 		}
-		if (it.selectionner && document.activeElement === input) {
+		// ⚠️ PAS de sélection si l'utilisateur a tapé depuis le début de
+		// l'intention. À l'ouverture d'un BL on écrit souvent avant que le
+		// formulaire soit stable : si un re-rendu reprend le curseur, `select()`
+		// surlignait « ABC » déjà tapé, et le « D » suivant l'écrasait — l'écran
+		// montrait « DEFG ». Voir aussi pg_saisie_protegee.bundle.js.
+		if (
+			it.selectionner &&
+			document.activeElement === input &&
+			!(this._frappe > it.naissance)
+		) {
 			try {
 				input.select();
 			} catch (e) {
