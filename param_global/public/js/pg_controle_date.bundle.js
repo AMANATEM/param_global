@@ -24,6 +24,7 @@ param_global.controle_date = {
 		br: "Bon de Réception",
 		bon_es: "Bon Entrée/Sortie",
 		paiement_br: "Paiement fournisseur",
+		retour_fournisseur: "Retour Fournisseur",
 		ecriture: "Écriture de Stock",
 		reconciliation: "Réconciliation de Stock",
 		remise: "Remise Bancaire",
@@ -130,6 +131,11 @@ param_global.controle_date.DOCUMENTS_AUTO = {
 		champ: "date",
 		cle_valider: () => "paiement_br",
 		cle_annuler: () => "paiement_br",
+	},
+	"Retour Fournisseur": {
+		champ: "date",
+		cle_valider: () => "retour_fournisseur",
+		cle_annuler: () => "retour_fournisseur",
 	},
 	"Stock Entry": {
 		champ: "posting_date",

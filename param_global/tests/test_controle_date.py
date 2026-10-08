@@ -84,11 +84,12 @@ class TestControleDate(FrappeTestCase):
 
 	# ── Les neuf documents ──────────────────────────────────────────────────
 
-	def test_les_neuf_documents_sont_couverts(self):
-		"""Le refus est bilingue : un libellé manquant produirait un message troué."""
+	def test_les_dix_documents_sont_couverts(self):
+		"""Le refus est bilingue : un libellé manquant produirait un message troué.
+		Le Retour Fournisseur est le dixième (2026-10-07)."""
 		attendus = {
-			"bl", "retour", "paiement", "br", "bon_es",
-			"paiement_br", "ecriture", "reconciliation", "remise",
+			"bl", "retour", "paiement", "br", "bon_es", "paiement_br",
+			"retour_fournisseur", "ecriture", "reconciliation", "remise",
 		}
 		self.assertEqual(set(DOCUMENTS), attendus)
 		for cle, libelles in DOCUMENTS.items():

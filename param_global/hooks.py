@@ -195,6 +195,10 @@ doc_events = {
 		"on_submit": "param_global.validation.on_submit",
 		"on_cancel": "param_global.validation.on_cancel",
 	},
+	"Retour Fournisseur": {
+		"on_submit": "param_global.validation.on_submit",
+		"on_cancel": "param_global.validation.on_cancel",
+	},
 	"Paiement BR": {
 		"on_submit": "param_global.validation.on_submit",
 		"on_cancel": "param_global.validation.on_cancel",

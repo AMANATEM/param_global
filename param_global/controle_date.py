@@ -80,6 +80,8 @@ DOCUMENTS = {
 	"br": {"fr": "Bon de Réception", "ar": "سند الاستلام"},
 	"bon_es": {"fr": "Bon Entrée/Sortie", "ar": "سند الدخول والخروج"},
 	"paiement_br": {"fr": "Paiement fournisseur", "ar": "سند الدفع للمورد"},
+	# ⚠️ Libellé arabe écrit par l'agent (2026-10-07), à faire relire.
+	"retour_fournisseur": {"fr": "Retour Fournisseur", "ar": "سند الإرجاع للمورد"},
 	"ecriture": {"fr": "Écriture de Stock", "ar": "سند حركة المخزون"},
 	"reconciliation": {"fr": "Réconciliation de Stock", "ar": "سند جرد المخزون"},
 	"remise": {"fr": "Remise Bancaire", "ar": "سند الإيداع البنكي"},

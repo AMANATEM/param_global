@@ -14,3 +14,16 @@ class TestAncrageValidation(FrappeTestCase):
 	def test_l_ancrage_par_defaut_reste_cree_par(self):
 		self.assertEqual(validation._ancrage("Purchase Order"), "transaction_date")
 		self.assertEqual(validation._ancrage("Delivery Note"), "customer")
+
+
+class TestRetourFournisseurBranche(FrappeTestCase):
+	"""Le Retour Fournisseur (2026-10-07) est le 14ᵉ doctype à porter « Validé le »
+	et le 10ᵉ document soumis au verrou chronologique."""
+
+	def test_porte_valide_le(self):
+		self.assertIn("Retour Fournisseur", validation.DOCTYPES)
+
+	def test_soumis_au_verrou_chronologique(self):
+		from param_global import controle_date
+
+		self.assertIn("retour_fournisseur", controle_date.DOCUMENTS)

@@ -35,6 +35,7 @@ DOCTYPES = (
 	"Retour",
 	"Paiement BL",
 	"Purchase Receipt",
+	"Retour Fournisseur",
 	"Paiement BR",
 	"Quotation",
 	"Purchase Order",
@@ -95,7 +96,7 @@ def _ancrage(doctype):
 
 
 def creer_champs():
-	"""Pose (ou met à jour) le champ sur les treize doctypes. Idempotent."""
+	"""Pose (ou met à jour) le champ sur les quatorze doctypes. Idempotent."""
 	for doctype in DOCTYPES:
 		if not frappe.db.exists("DocType", doctype):
 			continue

@@ -4,6 +4,17 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.38.0] - 2026-10-08
+
+### Le Retour Fournisseur entre dans le verrou chronologique et « Validé le »
+
+- `controle_date.DOCUMENTS` : 10ᵉ document, clé `retour_fournisseur` (refus
+  bilingue ; ⚠️ libellé arabe « سند الإرجاع للمورد » écrit par l'agent, à faire
+  relire), et branchement de la confirmation Administrateur dans
+  `pg_controle_date.bundle.js`.
+- `validation.DOCTYPES` : 14ᵉ doctype à porter « Validé le » (hook dans
+  `hooks.py`).
+
 ## [1.37.0] - 2026-10-07
 
 ### Une frappe rapide n'est plus effacée sous les doigts
