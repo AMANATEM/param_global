@@ -50,6 +50,7 @@ app_include_js = [
 	"pg_vente_perte.bundle.js",
 	"pg_ligne_manuelle.bundle.js",
 	"pg_saisie_protegee.bundle.js",
+	"pg_defilement_liste.bundle.js",
 ]
 
 # include js, css files in header of web template

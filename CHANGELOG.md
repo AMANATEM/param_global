@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.39.0] - 2026-10-10
+
+### La barre de défilement horizontal d'une liste reste visible
+
+- Nouveau bundle desk-wide `pg_defilement_liste.bundle.js` : toute liste dont
+  le contenu déborde en largeur (colonnes fixes — Paiement BL…) voit sa
+  hauteur bornée à l'écran et son en-tête collé en haut. La barre horizontale
+  est donc visible sans descendre au bas de la liste, comme sur la liste
+  Article.
+- Hauteur calculée d'après la position réelle de la liste et la zone de
+  pagination. Une liste qui ne déborde pas n'est pas touchée ; une liste qui
+  borne déjà sa hauteur (Article) non plus.
+- ⚠️ `hooks.py` modifié : `bench build --app param_global` puis
+  `supervisorctl restart all` en prod.
+
 ## [1.38.0] - 2026-10-08
 
 ### Le Retour Fournisseur entre dans le verrou chronologique et « Validé le »
