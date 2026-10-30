@@ -39,7 +39,9 @@
 //  6. Une seule intention vivante (jeton de génération) : une nouvelle demande
 //     annule la précédente. Fini les `setTimeout` concurrents qui se marchent
 //     dessus et se disputent le curseur.
-//  7. L'échec n'est plus silencieux : passé l'échéance, une trace console dit ce
+//  7. GARDE DE SÉLECTION : un champ que le moteur a sélectionné le RESTE quand
+//     le code réécrit sa valeur après coup. Voir `GARDE_MS` et `_garder`.
+//  8. L'échec n'est plus silencieux : passé l'échéance, une trace console dit ce
 //     qui était visé, ce qui a le focus à la place, et combien de re-rendus sont
 //     passés. Un « ça arrive parfois » devient diagnosticable.
 //
@@ -78,6 +80,16 @@ param_global.focus_grille = {
 	// curseur si tard le mettrait sur un écran que l'utilisateur a quitté.
 	FENETRE_CICATRISATION_MS: 3000,
 
+	// Durée pendant laquelle un champ sélectionné par le moteur est resélectionné
+	// si sa valeur est réécrite par le code. Le curseur arrive sur la Quantité
+	// AVANT que la valeur par défaut y soit posée : 1 au Retour, 0 par ERPNext sur
+	// l'Écriture de stock, le stock du dépôt sur la Réconciliation, ces deux-là
+	// après un aller-retour serveur. Or changer la valeur d'un champ annule sa
+	// sélection et met le curseur au bout — taper « 123 » donnait « 1,00123 ».
+	// Assez long pour couvrir un serveur lent ; la garde tombe de toute façon dès
+	// que l'utilisateur tape, clique ou quitte le champ.
+	GARDE_MS: 5000,
+
 	// Frames consécutives sans mutation avant de déclarer l'objectif atteint.
 	// Une seule ne suffit pas : le re-rendu arrive souvent juste après le focus.
 	FRAMES_STABLES: 3,
@@ -92,6 +104,8 @@ param_global.focus_grille = {
 	_geste: 0, // horodatage du dernier geste délibéré de l'utilisateur
 	_frappe: 0, // horodatage de la dernière frappe réelle dans un champ
 	_mutation: 0, // horodatage du dernier re-rendu de grille observé
+	_touche: 0, // horodatage de la dernière touche réelle, quelle qu'elle soit
+	_garde: null, // champ sélectionné à maintenir sélectionné (cf. `_garder`)
 	_observees: null,
 
 	setup() {
@@ -125,7 +139,12 @@ param_global.focus_grille = {
 		document.addEventListener(
 			"keydown",
 			(e) => {
-				if (e.isTrusted && (e.key === "Escape" || e.key === "Tab")) rendre_la_main(e);
+				if (!e.isTrusted) return;
+				// N'importe quelle touche — flèche, Début, Fin comprises — dit que
+				// l'utilisateur a pris le champ en main : la garde de sélection
+				// ne doit plus y toucher.
+				this._touche = performance.now();
+				if (e.key === "Escape" || e.key === "Tab") rendre_la_main(e);
 			},
 			true
 		);
@@ -348,10 +367,59 @@ param_global.focus_grille = {
 		) {
 			try {
 				input.select();
+				this._garder(input);
 			} catch (e) {
 				/* champ sans sélection (date, etc.) */
 			}
 		}
+	},
+
+	// ─── GARDE DE SÉLECTION ─────────────────────────────────────────────────
+	//
+	// Surveille le champ que `_poser` vient de sélectionner, et le resélectionne
+	// si le CODE en réécrit la valeur. On compare la valeur à chaque tour plutôt
+	// que d'écouter un événement : `$input.val()` n'en émet aucun.
+	//
+	// La garde tombe — et ne touche plus JAMAIS au champ — dès que :
+	//  - l'utilisateur tape, appuie sur une touche ou clique : c'est son champ ;
+	//  - le champ perd le curseur (Entrée vers le Prix, re-rendu de la grille…) ;
+	//  - GARDE_MS est écoulé.
+	// Une seule garde vivante : la suivante remplace la précédente.
+	_garder(input) {
+		const depuis = performance.now();
+		const garde = {
+			input: input,
+			valeur: input.value,
+			depuis: depuis,
+			fin: depuis + this.GARDE_MS,
+		};
+		this._garde = garde;
+
+		const tour = () => {
+			if (this._garde !== garde) return;
+			const t = performance.now();
+			if (
+				t > garde.fin ||
+				document.activeElement !== input ||
+				this._frappe > garde.depuis ||
+				this._touche > garde.depuis ||
+				this._geste > garde.depuis
+			) {
+				this._garde = null;
+				return;
+			}
+			if (input.value !== garde.valeur) {
+				garde.valeur = input.value;
+				try {
+					input.select();
+				} catch (e) {
+					this._garde = null;
+					return;
+				}
+			}
+			setTimeout(tour, 16);
+		};
+		setTimeout(tour, 16);
 	},
 
 	// ─── LOCALISATION DE LA CIBLE ───────────────────────────────────────────

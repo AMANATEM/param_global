@@ -4,6 +4,23 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.40.0] - 2026-10-30
+
+### La Quantité reste sélectionnée quand sa valeur arrive après le curseur
+
+- `pg_focus_grille.bundle.js` : nouvelle **garde de sélection** (`_garder`,
+  `GARDE_MS = 5000`). Un champ que le moteur vient de sélectionner est
+  resélectionné si le code réécrit sa valeur ensuite. Le curseur arrivait sur la
+  Quantité AVANT la valeur par défaut — 1 posé par le Retour, 0 renvoyé par
+  ERPNext sur l'Écriture de stock, le stock du dépôt sur la Réconciliation — et
+  changer la valeur d'un champ annule sa sélection : taper « 123 » donnait
+  « 1,00123 », « 0,00123 » ou « 120,00123 ».
+- La garde tombe dès que l'utilisateur tape, appuie sur une touche (flèches
+  comprises), clique ou quitte le champ : elle ne peut jamais écraser une saisie.
+- Vérifié à l'écran sur les sept grilles (Retour, BL, Devis, BC, BR, Écriture,
+  Réconciliation). Tests de source : `tests/test_garde_selection.py`.
+- ⚠️ Bundle modifié : `bench build --app param_global` en prod.
+
 ## [1.39.0] - 2026-10-10
 
 ### La barre de défilement horizontal d'une liste reste visible
