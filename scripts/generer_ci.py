@@ -1,7 +1,7 @@
-"""Écrit `.github/workflows/tests.yml` dans les 21 dépôts, depuis un seul gabarit.
+"""Écrit `.github/workflows/tests.yml` dans les 22 dépôts, depuis un seul gabarit.
 
 ⚠️ Le workflow est IDENTIQUE partout, à une ligne près (`APP:`). Le modifier dans
-un seul dépôt le ferait diverger des vingt autres — c'est exactement le mécanisme
+un seul dépôt le ferait diverger des vingt et un autres — c'est exactement le mécanisme
 qui a produit dix-sept copies de `pg_loupes`. Modifier le gabarit ici, puis
 relancer :
 
@@ -20,7 +20,7 @@ APPS = [
 	"param_global", "profils", "client", "fournisseur", "article", "bon_livraison",
 	"caisse", "remise_bancaire", "bon_reception", "bon_es", "ecriture_stock",
 	"reconciliation_stock", "devis", "bon_commande", "garage", "verification",
-	"rapport", "accueil", "commission", "professionnels", "article_manquant",
+	"rapport", "accueil", "commission", "professionnels", "article_manquant", "pointeuse",
 ]
 
 

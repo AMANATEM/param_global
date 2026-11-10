@@ -4,6 +4,14 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.40.1] - 2026-11-10
+
+### CI — ajout de l'app `pointeuse`
+
+- Le gabarit `scripts/ci_tests.yml` et `scripts/generer_ci.py` intègrent la
+  nouvelle app `pointeuse` : téléchargée et installée sur le site de test comme
+  les 21 autres. Workflows régénérés dans les 22 dépôts.
+
 ## [1.40.0] - 2026-10-30
 
 ### La Quantité reste sélectionnée quand sa valeur arrive après le curseur

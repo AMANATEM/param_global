@@ -1,10 +1,10 @@
 # Tests automatiques — AMANATEM
 #
-# ⚠️ FICHIER GÉNÉRÉ. Identique dans les 21 dépôts, à la ligne `APP:` près.
+# ⚠️ FICHIER GÉNÉRÉ. Identique dans les 22 dépôts, à la ligne `APP:` près.
 # Ne PAS le modifier ici : modifier le gabarit
 # `apps/param_global/scripts/ci_tests.yml`, puis relancer
 # `python3 apps/param_global/scripts/generer_ci.py`.
-# Le corriger dans un seul dépôt le ferait diverger des vingt autres — c'est le
+# Le corriger dans un seul dépôt le ferait diverger des vingt et un autres — c'est le
 # mécanisme qui a produit dix-sept copies de `pg_loupes`.
 #
 # ⚠️ PRÉREQUIS MANUEL : chaque dépôt doit porter un secret `AMANATEM_TOKEN`
@@ -93,7 +93,7 @@ jobs:
           for a in param_global profils client fournisseur article bon_livraison \
                    caisse remise_bancaire bon_reception bon_es ecriture_stock \
                    reconciliation_stock devis bon_commande garage verification \
-                   rapport accueil commission professionnels article_manquant; do
+                   rapport accueil commission professionnels article_manquant pointeuse; do
             # L'app testée vient du checkout, pas du dépôt distant : c'est le code
             # de CE push qu'on veut éprouver, pas celui déjà poussé.
             [ "$a" = "$APP" ] && continue
@@ -145,7 +145,7 @@ jobs:
           for a in param_global profils client fournisseur article bon_livraison \
                    caisse remise_bancaire bon_reception bon_es ecriture_stock \
                    reconciliation_stock devis bon_commande garage verification \
-                   rapport accueil commission professionnels article_manquant; do
+                   rapport accueil commission professionnels article_manquant pointeuse; do
             bench --site test.local install-app "$a"
           done
           # ⚠️ OBLIGATOIRE. `param_global` pose ses Custom Fields (dont
