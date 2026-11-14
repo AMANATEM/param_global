@@ -2,6 +2,7 @@ import frappe
 
 from param_global import controle_date
 from param_global.article_manuel import purger_tarifs as purger_tarifs_article_manuel
+from param_global.fuseau import appliquer_fuseau
 from param_global.grilles import appliquer_grilles_utilisateurs
 from param_global.sons import appliquer_son_muet
 from param_global.validation import creer_champs as creer_champs_validation
@@ -188,6 +189,10 @@ def apply_global_params():
     # son prix n'a pas de sens et se reproposait sur chaque nouvelle ligne
     # manuelle. Rejoué à chaque migrate — cf. article_manuel.py.
     purger_tarifs_article_manuel()
+
+    # Fuseau +00 (Maroc depuis le 2026-09-20), système ET utilisateurs — les
+    # tables de fuseaux de Frappe le croient encore à +01, cf. fuseau.py.
+    appliquer_fuseau()
 
     frappe.db.commit()
 

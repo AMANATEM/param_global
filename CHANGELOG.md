@@ -4,6 +4,21 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.41.0] - 2026-11-14
+
+### Fuseau horaire — `Africa/Abidjan` (+00)
+
+- Le Maroc est à +00 permanent depuis le 2026-09-20, mais `pytz` (épinglé
+  `==2025.2` par Frappe) et `moment-timezone` (desk) croient toujours
+  `Africa/Casablanca` à +01 : tout ERPNext avait une heure d'avance.
+- Nouveau module `fuseau.py` : `appliquer_fuseau()` pose `Africa/Abidjan` (GMT
+  sans heure d'été) sur les Paramètres système, le défaut global, le fuseau de
+  chaque compte resté sur Casablanca et ses défauts dans `tabDefaultValue`.
+  Appelé par `apply_global_params()`, donc rejoué à chaque migrate.
+- Les heures enregistrées entre le 20/09 et ce migrate gardent leur heure
+  d'avance : non réécrites, volontairement.
+- Tests : `tests/test_fuseau.py`.
+
 ## [1.40.1] - 2026-11-10
 
 ### CI — ajout de l'app `pointeuse`
