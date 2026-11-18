@@ -1,3 +1,31 @@
+// ── iPhone en « Site pour ordinateur » : afficher vraiment le desk ordinateur ──
+// Frappe déclare `<meta name="viewport" content="width=device-width…">`. Chrome
+// Android, en mode ordinateur, passe outre et rend la page sur ~980 px ; l'iPhone
+// (Safari, mais aussi Chrome iOS, même moteur WebKit) se contente de changer son
+// user-agent en « Macintosh » et respecte toujours la consigne : la page reste à
+// ~390 px et le desk bascule en mise en page mobile. On impose donc nous-mêmes
+// une largeur d'ordinateur, sans `user-scalable=no` pour que le zoom reste possible.
+// Repérage : un « Macintosh » tactile est un iPhone/iPad en mode ordinateur —
+// aucun Mac n'a d'écran tactile. Les iPad (≥ 1024 px) restent tels quels.
+(function () {
+	try {
+		var ios_mode_ordinateur =
+			/Macintosh/.test(navigator.userAgent) &&
+			navigator.maxTouchPoints > 1 &&
+			Math.min(screen.width, screen.height) < 768;
+		if (!ios_mode_ordinateur) return;
+		var meta = document.querySelector('meta[name="viewport"]');
+		if (!meta) {
+			meta = document.createElement("meta");
+			meta.name = "viewport";
+			document.head.appendChild(meta);
+		}
+		meta.setAttribute("content", "width=1280");
+	} catch (e) {
+		console.warn("param_global : viewport iPhone non ajusté", e);
+	}
+})();
+
 localStorage.setItem("container_fullwidth", "true");
 localStorage.setItem("pg_show_sidebar", "false");
 localStorage.setItem("show_sidebar", "false");
@@ -158,7 +186,32 @@ function _pg_show_navbar_username() {
 	}
 	var dt = _pg_current_doctype();
 	$span.css("color", (dt && PG_DOCTYPE_COLORS[dt]) || PG_FALLBACK_COLOR);
+	_pg_masquer_username_si_chevauche();
 }
+
+// Sur un écran étroit (téléphone), le nom centré passe par-dessus le champ de
+// recherche. Plutôt qu'un seuil de largeur deviné, on mesure : s'il touche un
+// autre élément de la barre, on le masque.
+function _pg_masquer_username_si_chevauche() {
+	var span = document.getElementById("pg-navbar-username");
+	if (!span) return;
+	span.style.visibility = "";
+	var r = span.getBoundingClientRect();
+	if (!r.width) return;
+	var voisins = document.querySelectorAll(
+		"header.navbar .search-bar, header.navbar .navbar-brand, header.navbar .navbar-nav"
+	);
+	for (var i = 0; i < voisins.length; i++) {
+		var v = voisins[i].getBoundingClientRect();
+		if (!v.width) continue;
+		if (r.left < v.right && r.right > v.left && r.top < v.bottom && r.bottom > v.top) {
+			span.style.visibility = "hidden";
+			return;
+		}
+	}
+}
+
+$(window).on("resize", frappe.utils.debounce(_pg_masquer_username_si_chevauche, 150));
 
 // Doctype de la route courante (Liste ou Formulaire), pour la couleur d'accent.
 function _pg_current_doctype() {

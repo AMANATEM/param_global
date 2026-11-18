@@ -4,6 +4,27 @@ Toutes les modifications notables de l'app **Param Global** sont documentées ic
 
 ---
 
+## [1.42.0] - 2026-11-18
+
+### iPhone — le mode « Site pour ordinateur » affiche enfin le desk ordinateur
+
+- Sur iPhone (Safari comme Chrome, même moteur WebKit), le mode ordinateur ne
+  change que l'user-agent : la consigne `viewport width=device-width` de Frappe
+  reste respectée, la page reste à ~390 px et le desk bascule en mise en page
+  mobile — alors qu'Android, lui, rend la page sur ~980 px.
+- `pg_ui_defaults.bundle.js` repère un « Macintosh » tactile à petit écran
+  (iPhone en mode ordinateur ; aucun Mac n'est tactile, les iPad sont exclus) et
+  impose `width=1280`, sans `user-scalable=no` pour garder le zoom. Rien ne
+  change pour les PC, Android ni l'iPhone en mode normal. Vérifié sur iPhone.
+
+### Nom d'utilisateur centré — masqué s'il chevauche la barre
+
+- Sur écran étroit, le nom centré dans la barre du haut passait par-dessus le
+  champ de recherche. Il est désormais masqué quand il touche un autre élément
+  de la barre (mesure réelle, rejouée au redimensionnement et à la navigation).
+- Pas de test automatisé : comportement purement visuel du desk, vérifié à
+  l'écran.
+
 ## [1.41.0] - 2026-11-14
 
 ### Fuseau horaire — `Africa/Abidjan` (+00)
